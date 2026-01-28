@@ -3,14 +3,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Menu, X, StickyNote, Smile, UtensilsCrossed, Pencil, Trash2, Coffee, ChevronRight, Check, History, Bell, RefreshCw, LayoutGrid, RotateCcw } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { OrderItem, OrderGroup, ItemType, AppSettings, OrderSubItem, OrderHistoryItem } from './types';
-import { OrderSummary } from './components/OrderSummary';
-import { OrderGroupSection } from './components/OrderGroupSection';
-import { MenuSelectionModal } from './components/MenuSelectionModal';
-import { EmojiSettingsModal } from './components/EmojiSettingsModal';
-import { QuickMemosModal } from './components/QuickMemosModal';
-import { MenuManagementModal } from './components/MenuManagementModal';
-import { HistoryModal } from './components/HistoryModal';
+import { OrderItem, OrderGroup, ItemType, AppSettings, OrderSubItem, OrderHistoryItem } from './types.ts';
+import { OrderSummary } from './components/OrderSummary.tsx';
+import { OrderGroupSection } from './components/OrderGroupSection.tsx';
+import { MenuSelectionModal } from './components/MenuSelectionModal.tsx';
+import { EmojiSettingsModal } from './components/EmojiSettingsModal.tsx';
+import { QuickMemosModal } from './components/QuickMemosModal.tsx';
+import { MenuManagementModal } from './components/MenuManagementModal.tsx';
+import { HistoryModal } from './components/HistoryModal.tsx';
 
 const SETTINGS_STORAGE_KEY = 'cafesync_settings_v1';
 const HISTORY_STORAGE_KEY = 'cafesync_history_v1';
@@ -181,7 +181,7 @@ function App() {
     setActiveGroupId(null);
     setIsSharedSyncActive(false);
     showToast("모든 테이블이 초기화되었습니다.");
-    addGroup(); // 최소 하나의 테이블은 다시 생성
+    addGroup(); 
   };
 
   const removeGroup = (id: string) => {

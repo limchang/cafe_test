@@ -2,8 +2,8 @@
 import React, { useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { OrderGroup, OrderItem, ItemType, AppSettings } from '../types';
-import { OrderCard } from './OrderCard';
+import { OrderGroup, OrderItem, ItemType, AppSettings } from '../types.ts';
+import { OrderCard } from './OrderCard.tsx';
 
 interface OrderGroupSectionProps {
   group: OrderGroup;
@@ -19,7 +19,7 @@ interface OrderGroupSectionProps {
   onOpenMenuModal: (orderId: string, currentItem: string, subItemId?: string | null, type?: ItemType) => void;
   onCopyGroupItemToAll: (orderId: string) => void;
   onDeleteGroupItemFromAll: (orderId: string) => void;
-  appSettings: AppSettings;
+  appSettings: AppSettings & { isSharedSyncActive?: boolean };
   onRemoveGroup: () => void;
   onInputModeChange?: (isActive: boolean) => void;
 }
