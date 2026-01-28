@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { OrderGroup, AggregatedOrder, AppSettings, ItemType, Temperature, DrinkSize } from '../types';
+import { OrderGroup, AggregatedOrder, AppSettings, ItemType, Temperature, DrinkSize } from '../types.ts';
 import { ChevronUp, ChevronDown, Coffee, Users, HelpCircle, CakeSlice, LayoutGrid, List, AlertCircle, CheckCircle2, Save, Send, UserMinus, Pencil, Check } from 'lucide-react';
 
 interface OrderSummaryProps {
@@ -40,7 +40,7 @@ const GroupedMemo: React.FC<GroupedMemoProps> = ({ memo, people, onJump }) => {
             onClick={(e) => { e.stopPropagation(); onJump(p.groupId, p.personId); }}
             className="relative inline-block h-4 w-4 rounded-full ring-1 ring-white bg-toss-grey-100 text-[8px] flex items-center justify-center shadow-sm hover:z-10 hover:scale-110 transition-all active:scale-95"
           >
-            {p.avatar}
+            {p.avatar || "👤"}
           </button>
         ))}
       </div>
@@ -77,19 +77,23 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   }, [expandState, viewMode, groups]);
 
+  // 공용 메뉴를 제외한 실제 '사람' 데이터만 필터링
   const personsWithGroup = useMemo(() => 
-    groups.flatMap(g => g.items.filter(p => !!p.avatar).map(p => ({ ...p, groupId: g.id }))), 
+    groups.flatMap(g => g.items.filter(p => p.avatar !== '😋').map(p => ({ ...p, groupId: g.id }))), 
     [groups]
   );
 
-  const totalPeople = useMemo(() => personsWithGroup.filter(p => p.avatar !== '😋').length, [personsWithGroup]);
+  // 참여 인원 수 (공용 메뉴 제외)
+  const totalPeople = useMemo(() => personsWithGroup.length, [personsWithGroup]);
   
+  // 아직 메뉴를 고르지 않은 인원 (공용 메뉴 제외)
   const undecidedPersons = useMemo(() => 
-    personsWithGroup.filter(p => p.avatar !== '😋' && (p.subItems.length === 0 || p.subItems.every(si => si.itemName === '미정')))
+    personsWithGroup.filter(p => !p.avatar || p.subItems.length === 0 || p.subItems.every(si => si.itemName === '미정'))
   , [personsWithGroup]);
 
+  // 안 먹기로 한 인원 (공용 메뉴 제외)
   const notEatingPersons = useMemo(() => 
-    personsWithGroup.filter(p => p.avatar !== '😋' && p.subItems.length === 1 && p.subItems[0].itemName === '안 먹음')
+    personsWithGroup.filter(p => p.avatar && p.avatar !== '😋' && p.subItems.length === 1 && p.subItems[0].itemName === '안 먹음')
   , [personsWithGroup]);
 
   const decidedCount = totalPeople - undecidedPersons.length;
@@ -98,7 +102,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   const aggregatedOrders = useMemo(() => {
     const map = new Map<string, AggregatedOrder>();
-    personsWithGroup.forEach(person => {
+    // 모든 아이템(공용 메뉴 포함)에 대해 합계 계산
+    groups.flatMap(g => g.items.map(p => ({ ...p, groupId: g.id }))).forEach(person => {
       person.subItems.forEach(si => {
         if (!si.itemName || si.itemName === '미정' || si.itemName === '안 먹음') return;
         
@@ -125,7 +130,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         if (a.type !== b.type) return a.type === 'DRINK' ? -1 : 1;
         return a.itemName.localeCompare(b.itemName);
     });
-  }, [personsWithGroup, appSettings.showDrinkSize]);
+  }, [groups, appSettings.showDrinkSize]);
 
   const totalItemCount = useMemo(() => aggregatedOrders.reduce((acc, curr) => acc + curr.count, 0), [aggregatedOrders]);
 
@@ -190,15 +195,17 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           className="w-full max-w-lg mx-auto bg-white border border-toss-grey-100 rounded-[28px] shadow-toss-elevated p-3.5 flex items-center justify-between pointer-events-auto active:scale-[0.98] transition-all"
         >
           <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${isAllDecided ? 'bg-toss-blueLight text-toss-blue' : 'bg-toss-grey-100 text-toss-grey-400'}`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${isAllDecided ? 'bg-toss-blue text-white shadow-lg' : 'bg-toss-grey-100 text-toss-grey-400'}`}>
               {isAllDecided ? <CheckCircle2 size={18} strokeWidth={3} /> : <Users size={18} />}
             </div>
-            <div>
-              <p className="text-[13px] font-black text-toss-grey-900 leading-tight">{decidedCount}명 완료! 내역 확인</p>
+            <div className="text-left">
+              <p className="text-[13px] font-black text-toss-grey-900 leading-tight">{decidedCount}명 주문 확인</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`text-[9px] font-black ${undecidedCount > 0 ? 'text-toss-red' : 'text-toss-blue'}`}>
-                  {undecidedCount > 0 ? `${undecidedCount}명 미정` : '전원 주문완료'}
+                  {undecidedCount > 0 ? `${undecidedCount}명 미정` : '전원 완료'}
                 </span>
+                <div className="w-0.5 h-0.5 bg-toss-grey-300 rounded-full" />
+                <span className="text-[9px] font-black text-toss-grey-400">총 {totalItemCount}개</span>
               </div>
             </div>
           </div>
@@ -259,7 +266,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                       onClick={() => { onJumpToOrder(p.groupId, p.id); onSetExpandState('collapsed'); }}
                       className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform"
                     >
-                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-yellow-300/30">{p.avatar}</div>
+                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-yellow-300/30">{p.avatar || "👤"}</div>
                       <span className="text-[8px] font-black text-yellow-600">이동</span>
                     </button>
                   ))}
@@ -291,7 +298,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                             onClick={() => { onJumpToOrder(p.groupId, p.id); onSetExpandState('collapsed'); }}
                             className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform opacity-60"
                           >
-                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-toss-grey-300">{p.avatar}</div>
+                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-toss-grey-300">{p.avatar || "👤"}</div>
                           </button>
                         ))}
                       </div>
@@ -361,7 +368,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               )
             ) : (
               groups.map((group) => {
-                const groupPersons = group.items.filter(p => p.subItems.some(si => si.itemName !== '미정' && si.itemName !== '' && si.itemName !== '안 먹음'));
+                const participantsCount = group.items.filter(p => p.avatar !== '😋').length;
                 const isEditing = editingGroupId === group.id;
 
                 return (
@@ -377,7 +384,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                           <span className="text-[13px] font-black text-toss-grey-800 tracking-tight">{group.name}</span>
                           <button onClick={() => handleStartEditName(group.id, group.name)} className="p-1 text-toss-grey-300 hover:text-toss-blue transition-colors"><Pencil size={12} /></button>
                           <div className="w-1 h-1 bg-toss-grey-200 rounded-full" />
-                          <span className="text-[11px] font-bold text-toss-grey-400">{group.items.length}명 참여</span>
+                          <span className="text-[11px] font-bold text-toss-grey-400">{participantsCount}명 참여</span>
                         </div>
                       )}
                       <span className="text-[11px] font-black text-toss-blue bg-toss-blueLight px-2 py-0.5 rounded-full">
@@ -385,12 +392,12 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                       </span>
                     </div>
                     <div className="divide-y divide-toss-grey-50">
-                      {group.items.some(p => p.subItems.some(si => si.itemName !== '미정' && si.itemName !== '안 먹음')) ? (
-                        group.items.filter(p => p.subItems.some(si => si.itemName !== '미정' && si.itemName !== '안 먹음')).map(person => (
+                      {group.items.some(p => p.subItems.some(si => si.itemName !== '미정' && si.itemName !== '' && si.itemName !== '안 먹음')) ? (
+                        group.items.filter(p => p.subItems.some(si => si.itemName !== '미정' && si.itemName !== '' && si.itemName !== '안 먹음')).map(person => (
                           <div key={person.id} className="p-3">
                              <div className="flex items-center justify-between">
                                 <button onClick={() => { onJumpToOrder(group.id, person.id); onSetExpandState('collapsed'); }} className="flex items-center gap-2 active:scale-95 transition-transform min-w-0 text-left">
-                                  <span className="text-lg">{person.avatar}</span>
+                                  <span className="text-lg">{person.avatar || (person.avatar === '😋' ? '😋' : '👤')}</span>
                                   <div className="flex flex-col min-w-0">
                                     {person.subItems.filter(si => si.itemName !== '미정' && si.itemName !== '안 먹음').map(si => (
                                       <div key={si.id} className="flex items-center gap-1.5">
