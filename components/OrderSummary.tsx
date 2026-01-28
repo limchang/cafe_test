@@ -77,21 +77,18 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   }, [expandState, viewMode, groups]);
 
-  // 공용 메뉴를 제외한 실제 '사람' 데이터만 필터링 (😋 이모지 제외)
+  // 공용 메뉴(😋)를 제외한 실제 사람(인원)만 필터링
   const personsWithGroup = useMemo(() => 
     groups.flatMap(g => g.items.filter(p => p.avatar !== '😋').map(p => ({ ...p, groupId: g.id }))), 
     [groups]
   );
 
-  // 참여 인원 수 (공용 메뉴 제외)
   const totalPeople = useMemo(() => personsWithGroup.length, [personsWithGroup]);
   
-  // 아직 메뉴를 고르지 않은 인원 (공용 메뉴 제외)
   const undecidedPersons = useMemo(() => 
     personsWithGroup.filter(p => !p.avatar || p.subItems.length === 0 || p.subItems.every(si => si.itemName === '미정'))
   , [personsWithGroup]);
 
-  // 안 먹기로 한 인원 (공용 메뉴 제외)
   const notEatingPersons = useMemo(() => 
     personsWithGroup.filter(p => p.avatar && p.avatar !== '😋' && p.subItems.length === 1 && p.subItems[0].itemName === '안 먹음')
   , [personsWithGroup]);
@@ -102,7 +99,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   const aggregatedOrders = useMemo(() => {
     const map = new Map<string, AggregatedOrder>();
-    // 모든 아이템(공용 메뉴 포함)에 대해 합계 계산
+    // 모든 아이템(공용 메뉴 포함)에 대해 전체 수량 합계 계산
     groups.flatMap(g => g.items.map(p => ({ ...p, groupId: g.id }))).forEach(person => {
       person.subItems.forEach(si => {
         if (!si.itemName || si.itemName === '미정' || si.itemName === '안 먹음') return;
@@ -199,7 +196,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               {isAllDecided ? <CheckCircle2 size={18} strokeWidth={3} /> : <Users size={18} />}
             </div>
             <div className="text-left">
-              <p className="text-[13px] font-black text-toss-grey-900 leading-tight">{decidedCount}명 주문 확인</p>
+              <p className="text-[13px] font-black text-toss-grey-900 leading-tight">{decidedCount}명 주문 완료</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={`text-[9px] font-black ${undecidedCount > 0 ? 'text-toss-red' : 'text-toss-blue'}`}>
                   {undecidedCount > 0 ? `${undecidedCount}명 미정` : '전원 완료'}
@@ -334,7 +331,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               )
             ) : (
               groups.map((group) => {
-                // 공용 메뉴를 제외한 실제 사람 수 계산
                 const participantsCount = group.items.filter(p => p.avatar !== '😋').length;
                 const isEditing = editingGroupId === group.id;
 
