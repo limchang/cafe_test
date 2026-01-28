@@ -307,7 +307,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           {item.type === 'DRINK' ? (
-                            <span className={`text-[8px] font-black px-1 py-0.5 rounded bg-white border shrink-0 ${item.temperature === 'ICE' ? 'text-toss-blue border-toss-blue/20' : 'text-toss-red border-toss-red/20'}`}>{item.temperature}</span>
+                            <span className={`text-[8px] font-black px-1 py-0.5 rounded bg-white border shrink-0 ${item.temperature === 'ICE' ? 'text-toss-blue' : 'text-toss-red'}`}>{item.temperature}</span>
                           ) : (
                             <span className="text-[8px] font-black bg-white border border-amber-200 text-amber-700 px-1 py-0.5 rounded shrink-0">DST</span>
                           )}
@@ -334,6 +334,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               )
             ) : (
               groups.map((group) => {
+                // 공용 메뉴를 제외한 실제 사람 수 계산
                 const participantsCount = group.items.filter(p => p.avatar !== '😋').length;
                 const isEditing = editingGroupId === group.id;
 
