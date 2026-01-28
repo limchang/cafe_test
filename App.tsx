@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Menu, X, StickyNote, Smile, UtensilsCrossed, Pencil, Trash2, Coffee, ChevronRight, Check, History, Bell, RefreshCw, LayoutGrid, RotateCcw } from 'lucide-react';
+import { Plus, Menu, X, StickyNote, Smile, UtensilsCrossed, Pencil, Trash2, ChevronRight, Check, History, Bell, RefreshCw, LayoutGrid, RotateCcw } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { OrderItem, OrderGroup, ItemType, AppSettings, OrderSubItem, OrderHistoryItem } from './types.ts';
 import { OrderSummary } from './components/OrderSummary.tsx';

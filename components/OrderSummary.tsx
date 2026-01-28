@@ -1,8 +1,8 @@
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { OrderGroup, AggregatedOrder, AppSettings, ItemType, Temperature, DrinkSize } from '../types.ts';
-import { ChevronUp, ChevronDown, Coffee, Users, HelpCircle, CakeSlice, LayoutGrid, List, AlertCircle, CheckCircle2, Save, Send, UserMinus, Pencil, Check } from 'lucide-react';
+import { OrderGroup, AggregatedOrder, AppSettings, ItemType } from '../types.ts';
+import { ChevronUp, ChevronDown, Coffee, Users, LayoutGrid, List, CheckCircle2, Save, UserMinus, Pencil, Check } from 'lucide-react';
 
 interface OrderSummaryProps {
   groups: OrderGroup[];
@@ -77,7 +77,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   }, [expandState, viewMode, groups]);
 
-  // 공용 메뉴를 제외한 실제 '사람' 데이터만 필터링
+  // 공용 메뉴를 제외한 실제 '사람' 데이터만 필터링 (😋 이모지 제외)
   const personsWithGroup = useMemo(() => 
     groups.flatMap(g => g.items.filter(p => p.avatar !== '😋').map(p => ({ ...p, groupId: g.id }))), 
     [groups]
@@ -271,40 +271,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {notEatingPersons.length > 0 && (
-              <div className="bg-toss-grey-100 rounded-2xl border border-toss-grey-200 shadow-sm animate-in slide-in-from-top-2 overflow-hidden transition-all duration-300">
-                <button 
-                  onClick={() => setIsNotEatingCollapsed(!isNotEatingCollapsed)}
-                  className="w-full p-3 flex items-center justify-between"
-                >
-                  <span className="text-[11px] font-black text-toss-grey-600">안 먹음 인원 ({notEatingPersons.length}명)</span>
-                  <div className={`text-toss-grey-400 transition-transform duration-300 ${!isNotEatingCollapsed ? 'rotate-180' : ''}`}><ChevronDown size={14} /></div>
-                </button>
-                <AnimatePresence>
-                  {!isNotEatingCollapsed && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }} 
-                      animate={{ height: 'auto', opacity: 1 }} 
-                      exit={{ height: 0, opacity: 0 }}
-                      className="px-3 pb-3 overflow-hidden"
-                    >
-                      <div className="flex flex-wrap gap-2">
-                        {notEatingPersons.map((p) => (
-                          <button 
-                            key={p.id}
-                            onClick={() => { onJumpToOrder(p.groupId, p.id); onSetExpandState('collapsed'); }}
-                            className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform opacity-60"
-                          >
-                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-toss-grey-300">{p.avatar || "👤"}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             )}
           </div>

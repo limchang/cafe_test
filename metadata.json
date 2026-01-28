@@ -2,7 +2,7 @@
   "name": "CafeSync",
   "short_name": "CafeSync",
   "description": "단체 주문을 위한 스마트 카페 주문 매니저",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F2F4F6",
   "theme_color": "#3182F6",

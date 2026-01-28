@@ -113,21 +113,22 @@
       }
     </style>
     <script type="importmap">
-    {
-      "imports": {
-        "uuid": "https://esm.sh/uuid@^13.0.0",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-        "react/": "https://esm.sh/react@^19.2.3/",
-        "react": "https://esm.sh/react@^19.2.3",
-        "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-        "@dnd-kit/sortable": "https://esm.sh/@dnd-kit/sortable@^10.0.0",
-        "@dnd-kit/core": "https://esm.sh/@dnd-kit/core@^6.3.1",
-        "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
-        "@dnd-kit/utilities": "https://esm.sh/@dnd-kit/utilities@^3.2.2"
-      }
-    }
-    </script>
-    <!-- 추가: 브라우저가 직접 TSX를 해석할 수 없으므로 빌드 도구가 엔트리 포인트를 인식하도록 함 -->
+{
+  "imports": {
+    "uuid": "https://esm.sh/uuid@^13.0.0",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "@dnd-kit/sortable": "https://esm.sh/@dnd-kit/sortable@^10.0.0",
+    "@dnd-kit/core": "https://esm.sh/@dnd-kit/core@^6.3.1",
+    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+    "@dnd-kit/utilities": "https://esm.sh/@dnd-kit/utilities@^3.2.2",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
     <script type="module" src="./index.tsx"></script>
   </head>
   <body class="text-toss-grey-900 selection:bg-toss-blueLight selection:text-toss-blue">
