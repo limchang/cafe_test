@@ -1,0 +1,4 @@
+/* Global styles */
+@import "tailwindcss";
+
+/* Noto Color Emoji is already imported in index.html for better performance with preconnect */

@@ -8,13 +8,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="theme-color" content="#F2F4F6" />
     <title>CafeSync - 스마트 카페 주문 매니저</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       window.tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
-              sans: ['-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Pretendard', 'Roboto', 'Noto Sans KR', 'Segoe UI', 'Malgun Gothic', 'sans-serif'],
+              sans: ['Noto Color Emoji', '-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Pretendard', 'Roboto', 'Noto Sans KR', 'Segoe UI', 'Malgun Gothic', 'sans-serif'],
             },
             colors: {
               toss: {
@@ -90,6 +93,7 @@
         background-color: #F2F4F6;
         user-select: none;
         -webkit-tap-highlight-color: transparent;
+        font-family: 'Noto Color Emoji', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Roboto', 'Noto Sans KR', 'Segoe UI', 'Malgun Gothic', sans-serif;
       }
       .custom-scrollbar::-webkit-scrollbar {
         width: 4px;
@@ -131,8 +135,10 @@
 }
 </script>
     <script type="module" src="index.tsx"></script>
-  </head>
+  <link rel="stylesheet" href="/index.css">
+</head>
   <body class="text-toss-grey-900 selection:bg-toss-blueLight selection:text-toss-blue">
     <div id="root"></div>
-  </body>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>
