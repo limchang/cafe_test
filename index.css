@@ -1,4 +1,90 @@
-/* Global styles */
 @import "tailwindcss";
 
-/* Noto Color Emoji is already imported in index.html for better performance with preconnect */
+@theme {
+  --font-sans: "Noto Color Emoji", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Roboto", "Noto Sans KR", "Segoe UI", "Malgun Gothic", sans-serif;
+
+  --color-toss-bg: #F2F4F6;
+  --color-toss-white: #FFFFFF;
+  --color-toss-blue: #3182F6;
+  --color-toss-blueLight: #E8F3FF;
+  --color-toss-red: #F04452;
+  --color-toss-redLight: #FCECEC;
+  
+  --color-toss-grey-50: #F9FAFB;
+  --color-toss-grey-100: #F2F4F6;
+  --color-toss-grey-200: #E5E8EB;
+  --color-toss-grey-300: #D1D6DB;
+  --color-toss-grey-400: #B0B8C1;
+  --color-toss-grey-500: #8B95A1;
+  --color-toss-grey-600: #6B7684;
+  --color-toss-grey-700: #4E5968;
+  --color-toss-grey-800: #333D4B;
+  --color-toss-grey-900: #191F28;
+
+  --shadow-toss: 0 4px 24px 0 rgba(0, 0, 0, 0.04);
+  --shadow-toss-sm: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  --shadow-toss-card: 0 0 0 1px rgba(0,0,0,0.02), 0 2px 12px rgba(0,0,0,0.03);
+  --shadow-toss-elevated: 0 12px 48px rgba(0,0,0,0.12);
+
+  --animate-bounce-short: bounce-short 1.5s ease-in-out infinite;
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-success-pop: success-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  --animate-toast-in: toast-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  --animate-heart-beat: heart-beat 1.5s ease-in-out infinite;
+  --animate-highlight-ping: highlight-ping 1s ease-in-out infinite;
+
+  @keyframes bounce-short {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  @keyframes success-pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes toast-in {
+    0% { transform: translateY(20px) translateX(-50%); opacity: 0; }
+    100% { transform: translateY(0) translateX(-50%); opacity: 1; }
+  }
+  @keyframes heart-beat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  @keyframes highlight-ping {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(49, 130, 246, 0.5); }
+    50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(49, 130, 246, 0); }
+  }
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  background-color: #F2F4F6;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'Noto Color Emoji', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Roboto', 'Noto Sans KR', 'Segoe UI', 'Malgun Gothic', sans-serif;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #E5E8EB;
+  border-radius: 20px;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+input, textarea {
+  user-select: text;
+}
