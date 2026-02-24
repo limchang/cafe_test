@@ -14,7 +14,7 @@ import { HistoryModal } from './components/HistoryModal.tsx';
 
 const SETTINGS_STORAGE_KEY = 'cafesync_settings_v1';
 const HISTORY_STORAGE_KEY = 'cafesync_history_v1';
-export const DEFAULT_EMOJIS = ["👨", "👩", "👶", "🧓", "👵", "👦", "👧", "🐶", "😺", "🐯", "🐷"];
+export const DEFAULT_EMOJIS = ["👨🏻", "👩🏻", "👶🏻", "🧓🏻", "👵🏻", "👦🏻", "👧🏻", "🐶", "😺", "🐯", "🐷"];
 
 const createEmptyOrder = (): OrderItem => ({
   id: uuidv4(),

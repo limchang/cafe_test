@@ -28,7 +28,7 @@ interface OrderCardProps {
 const CATEGORY_EMOJIS: Record<EmojiCategory, string[]> = {
   ANIMALS: ["🦁", "🐯", "🐨", "🐷", "🐸", "🐵", "🐔", "🐧", "🐧", "🐦", "🐥", "🦉", "🐺", "북극곰", "🐴", "🦄", "🐝"],
   FACES: ["😀", "😍", "😎", "🤔", "😴", "🤩", "🥳", "🥺", "😡", "🤢", "🤡", "👻", "👽", "🤖", "💩", "✨"],
-  HANDS: ["👍", "👎", "👊", "✌️", "👌", "✋", "👐", "🙌", "👏", "🙏", "🤝", "🤘", "🤙", "👋", "✍️", "💪"],
+  HANDS: ["👍🏻", "👎🏻", "👊🏻", "✌🏻", "👌🏻", "✋🏻", "👐🏻", "🙌🏻", "👏🏻", "🙏🏻", "🤝🏻", "🤘🏻", "🤙🏻", "👋🏻", "✍🏻", "💪🏻"],
   NUMBERS: ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "따봉"]
 };
 
@@ -282,9 +282,9 @@ export const OrderCard: React.FC<OrderCardProps> = ({
             className="flex-1 flex flex-col"
           >
             <div className="grid grid-cols-4 gap-1 flex-1 items-center justify-items-center overflow-y-auto no-scrollbar pt-1">
-              <button onClick={() => handleAvatarSelect(CATEGORY_EMOJIS[appSettings.randomCategory][Math.floor(Math.random() * 16)])} className="w-11 h-11 flex items-center justify-center rounded-xl bg-white/50 text-toss-blue transition-transform active:scale-90 border border-toss-blue/10"><Dices size={24} /></button>
+              <button onClick={() => handleAvatarSelect(CATEGORY_EMOJIS[appSettings.randomCategory][Math.floor(Math.random() * 16)])} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/50 text-toss-blue transition-transform active:scale-90 border border-toss-blue/10"><Dices size={18} /></button>
               {appSettings.defaultEmojis.map(emoji => (
-                <button key={emoji} onClick={() => handleAvatarSelect(emoji)} className="w-11 h-11 flex items-center justify-center rounded-xl text-2xl bg-white border border-toss-grey-100 shadow-sm transition-transform active:scale-90 hover:border-toss-blue/30">{emoji}</button>
+                <button key={emoji} onClick={() => handleAvatarSelect(emoji)} className="w-8 h-8 flex items-center justify-center rounded-xl text-3xl bg-white border border-toss-grey-100 shadow-sm transition-transform active:scale-90 hover:border-toss-blue/30 leading-none">{emoji}</button>
               ))}
             </div>
             <button onClick={() => onRemove(order.id)} className="w-full h-8 mt-1.5 rounded-xl text-[10px] font-black text-white bg-toss-grey-400 hover:bg-toss-red transition-all shadow-sm">인원 삭제</button>

@@ -79,7 +79,7 @@ export const OrderGroupSection: React.FC<OrderGroupSectionProps> = ({
 
         {!isOdd && (
           <button onClick={() => addOrderItem(group.id)} className="w-full h-10 border-2 border-dashed border-toss-grey-200 bg-toss-grey-50 text-toss-grey-400 rounded-[14px] flex items-center justify-center gap-1 hover:bg-toss-grey-100 active:scale-[0.98] transition-all shrink-0">
-            <Plus size={14} strokeWidth={3} /><span className="text-[11px] font-black uppercase tracking-tighter">인원 추가</span>
+            <Plus size={14} strokeWidth={3} /><span className="text-[11px] font-black uppercase tracking-tighter">추가</span>
           </button>
         )}
 
