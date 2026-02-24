@@ -415,7 +415,7 @@ function App() {
 
   return (
     <div className="min-h-screen pb-24 bg-toss-bg text-toss-grey-900 flex flex-col relative overflow-x-hidden">
-      <header className="bg-white/95 backdrop-blur-xl sticky top-0 z-[100] border-b border-toss-grey-100 shadow-sm">
+      <header className="bg-white/95 backdrop-blur-xl fixed top-0 left-0 right-0 z-[100] border-b border-toss-grey-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex flex-col">
             <h1 className="text-[18px] font-black text-toss-grey-900 tracking-tighter select-none">카페싱크</h1>
@@ -427,7 +427,7 @@ function App() {
             </button>
             <AnimatePresence>
               {isMainMenuOpen && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute right-0 top-10 w-64 bg-white rounded-3xl shadow-toss-elevated border border-toss-grey-100 p-2 z-[51]">
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute right-0 top-10 w-64 bg-white rounded-3xl shadow-toss-elevated border border-toss-grey-100 p-2 z-[101]">
                   <div className="p-1.5 border-b border-toss-grey-50"><span className="text-[9px] font-black text-toss-grey-400 uppercase tracking-widest px-1">주문 관리</span></div>
                   <button onClick={() => { setIsHistoryModalOpen(true); setIsMainMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-[12px] font-bold text-toss-grey-700 hover:bg-toss-grey-50 rounded-2xl"><History size={14} /> 저장된 주문 내역</button>
                   <button onClick={() => { setIsMenuMgmtModalOpen(true); setIsMainMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-[12px] font-bold text-toss-grey-700 hover:bg-toss-grey-50 rounded-2xl"><UtensilsCrossed size={14} /> 메뉴판 관리</button>
@@ -456,7 +456,46 @@ function App() {
         </div>
       </header>
 
-      <main className="flex-1 py-2">
+      <AnimatePresence>
+        {!isAnyInputActive && (
+          <motion.div 
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            className="fixed bottom-28 left-0 right-0 z-[1000] flex justify-center px-4 pointer-events-none"
+          >
+            <div className="bg-white/90 backdrop-blur-2xl border border-white/50 rounded-[28px] p-1.5 shadow-toss-elevated pointer-events-auto w-fit max-w-[calc(100vw-32px)] ring-1 ring-black/5 flex flex-col items-center transition-all duration-300">
+              <div className="flex items-center justify-center gap-3 px-3 py-1 overflow-x-auto no-scrollbar max-w-full">
+                {groups.map(group => {
+                  const isActive = activeGroupId === group.id;
+                  const firstChar = group.name.trim().charAt(0) || '?';
+                  const hasUndecided = group.items.some(p => p.avatar && p.avatar !== '😋' && (p.subItems.length === 0 || p.subItems.every(si => si.itemName === '미정')));
+                  return (
+                    <div key={group.id} className="relative shrink-0 py-1">
+                      <motion.button 
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => {
+                          if (activeGroupId === group.id) openManageSheet(group.id);
+                          else { setActiveGroupId(group.id); scrollToTable(group.id); }
+                        }}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-[14px] transition-all relative ${isActive ? 'bg-toss-blue text-white shadow-md scale-110 z-10' : 'bg-toss-grey-100 text-toss-grey-400'}`}
+                      >
+                        {firstChar}
+                        {hasUndecided && <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-yellow-400 border-2 border-white rounded-full shadow-sm animate-pulse"></div>}
+                      </motion.button>
+                    </div>
+                  );
+                })}
+                <div className="shrink-0 py-1">
+                  <button onClick={addGroup} className="h-9 px-4 bg-toss-blueLight text-toss-blue rounded-full font-black text-[12px] active:scale-95 transition-all shadow-sm border border-toss-blue/10 whitespace-nowrap">테이블 추가</button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main className="flex-1 py-2 mt-[58px]">
         {groups.length > 0 ? (
           <div ref={scrollContainerRef} className="flex overflow-x-auto snap-x snap-mandatory gap-2 pb-2 no-scrollbar px-4 scroll-smooth">
             {groups.map((group) => (
@@ -494,45 +533,6 @@ function App() {
           </div>
         )}
       </main>
-
-      <AnimatePresence>
-        {!isAnyInputActive && (
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            className="fixed bottom-28 left-0 right-0 z-[40] flex justify-center px-4 pointer-events-none"
-          >
-            <div className="bg-white/90 backdrop-blur-2xl border border-white/50 rounded-[28px] p-1.5 shadow-toss-elevated pointer-events-auto w-fit max-w-[calc(100vw-32px)] ring-1 ring-black/5 flex flex-col items-center transition-all duration-300">
-              <div className="flex items-center justify-center gap-3 px-3 py-1 overflow-x-auto no-scrollbar max-w-full">
-                {groups.map(group => {
-                  const isActive = activeGroupId === group.id;
-                  const firstChar = group.name.trim().charAt(0) || '?';
-                  const hasUndecided = group.items.some(p => p.avatar && p.avatar !== '😋' && (p.subItems.length === 0 || p.subItems.every(si => si.itemName === '미정')));
-                  return (
-                    <div key={group.id} className="relative shrink-0 py-1">
-                      <motion.button 
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => {
-                          if (activeGroupId === group.id) openManageSheet(group.id);
-                          else { setActiveGroupId(group.id); scrollToTable(group.id); }
-                        }}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-[14px] transition-all relative ${isActive ? 'bg-toss-blue text-white shadow-md scale-110 z-10' : 'bg-toss-grey-100 text-toss-grey-400'}`}
-                      >
-                        {firstChar}
-                        {hasUndecided && <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-yellow-400 border-2 border-white rounded-full shadow-sm animate-pulse"></div>}
-                      </motion.button>
-                    </div>
-                  );
-                })}
-                <div className="shrink-0 py-1">
-                  <button onClick={addGroup} className="h-9 px-4 bg-toss-blueLight text-toss-blue rounded-full font-black text-[12px] active:scale-95 transition-all shadow-sm border border-toss-blue/10 whitespace-nowrap">테이블 추가</button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {managingGroupId && (

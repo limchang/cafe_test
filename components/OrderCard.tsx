@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderItem, ItemType, DrinkSize, AppSettings, OrderSubItem, EmojiCategory } from '../types';
-import { Snowflake, Flame, Trash2, Plus, Dices, MoreHorizontal, AlertCircle, ArrowLeft, ChevronDown, ChevronUp, User, MessageCircle, Check, Pencil, Send, Minus, UtensilsCrossed, UserMinus, RefreshCw, CakeSlice, Info, Clock, RotateCcw, Heart } from 'lucide-react';
+import { Snowflake, Flame, Trash2, Plus, Dices, MoreHorizontal, AlertCircle, ArrowLeft, ChevronDown, ChevronUp, User, MessageCircle, Check, Pencil, Send, Minus, UtensilsCrossed, UserMinus, RefreshCw, CakeSlice, Info, Clock, RotateCcw, Heart, X } from 'lucide-react';
 
 interface ExtendedSubItem extends OrderSubItem {
   isSynced?: boolean;
@@ -54,6 +54,11 @@ export const OrderCard: React.FC<OrderCardProps> = ({
   const [customMenuName, setCustomMenuName] = useState("");
   const [timeLeft, setTimeLeft] = useState(5.0);
   const [expandTimeLeft, setExpandTimeLeft] = useState(1.5);
+  const [localQuickMemos, setLocalQuickMemos] = useState<string[]>([]);
+
+  useEffect(() => {
+    setLocalQuickMemos(appSettings.quickMemos);
+  }, [appSettings.quickMemos]);
   
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -122,8 +127,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
     return chips;
   }, [order.subItems]);
 
-  const leftMemos = memoChips.filter((_, i) => i % 2 === 0);
-  const rightMemos = memoChips.filter((_, i) => i % 2 !== 0);
+  const allMemos = memoChips;
 
   const quickMenuOptions = useMemo(() => {
     return drinkItems.filter(i => i !== '미정' && i !== '안 먹음').slice(0, 3);
@@ -166,11 +170,18 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
   const handleAddCustomMemo = () => {
     if (!customMemo.trim() || !activeMemoSubId) return;
+    const text = customMemo.trim();
+    
+    // 예시 칩에 추가
+    if (!localQuickMemos.includes(text)) {
+      setLocalQuickMemos(prev => [...prev, text]);
+    }
+
     const si = order.subItems.find(s => s.id === activeMemoSubId);
     if (!si) return;
     let m = si.memo ? si.memo.split(',').map(x => x.trim()).filter(Boolean) : [];
-    if (!m.includes(customMemo.trim())) {
-      m = [...m, customMemo.trim()];
+    if (!m.includes(text)) {
+      m = [...m, text];
       onUpdate(order.id, { subItems: order.subItems.map(s => s.id === activeMemoSubId ? { ...s, memo: m.join(', ') } : s) });
     }
     setCustomMemo("");
@@ -182,7 +193,19 @@ export const OrderCard: React.FC<OrderCardProps> = ({
     const si = order.subItems.find(s => s.id === subItemId);
     if (!si || !si.memo) return;
     const newMemo = si.memo.split(',').map(m => m.trim()).filter(m => m !== text).join(', ');
-    onUpdate(order.id, { subItems: order.subItems.map(s => s.id === activeMemoSubId ? { ...s, memo: newMemo } : s) });
+    onUpdate(order.id, { subItems: order.subItems.map(s => s.id === subItemId ? { ...s, memo: newMemo } : s) });
+  };
+
+  const handleUndoOrder = () => {
+    onUpdate(order.id, { subItems: [] });
+    setIsMoreExpanded(false);
+    setIsDirectInputMode(false);
+    setIsMemoDirectInputMode(false);
+    setActiveMemoSubId(null);
+    if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    if (expandIntervalRef.current) clearInterval(expandIntervalRef.current);
+    setTimeLeft(5.0);
   };
 
   const handleResetCard = () => {
@@ -251,26 +274,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
   // 개인 주문 카드: 통합 컨테이너 사용
   return (
-    <div className={`relative rounded-[20px] h-full flex flex-col p-1.5 transition-all duration-500 overflow-visible z-10 
+    <div className={`relative rounded-[24px] flex flex-col p-2 pb-4 transition-all duration-500 overflow-visible z-10 
       ${highlighted ? 'border-toss-blue ring-4 ring-toss-blueLight animate-highlight-ping z-20 shadow-xl' : 'shadow-toss-card'}
       ${isUndecided ? 'bg-yellow-50 border-2 border-yellow-400' : 
         isNotEating ? 'bg-toss-grey-100 border-2 border-toss-grey-300' :
         isDecided ? 'bg-toss-blueLight border-2 border-toss-blue' :
         'bg-white border-2 border-toss-grey-100'}
     `}>
-      {/* 상태 배지: 이모지 선택 중에도 유지 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[500] pointer-events-none">
-        {isUndecided && (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-[7px] font-black shadow-md border border-yellow-500/20 whitespace-nowrap uppercase flex items-center justify-center">주문 전</motion.div>
-        )}
-        {isNotEating && (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-toss-grey-400 text-white px-2.5 py-0.5 rounded-full text-[8px] font-black shadow-md border border-toss-grey-500/20 whitespace-nowrap uppercase flex items-center justify-center">먹지 않겠대요</motion.div>
-        )}
-        {isDecided && (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-toss-blue text-white px-2 py-0.5 rounded-full text-[7px] font-black shadow-md border border-toss-blue/20 whitespace-nowrap uppercase flex items-center justify-center">주문 완료</motion.div>
-        )}
-      </div>
-
+      {/* 상태 배지: 이모지 선택 중에도 유지 - 제거됨 (이모지 옆으로 이동) */}
       <AnimatePresence mode="wait">
         {showAvatarPicker ? (
           /* 이모지 선택 화면 */
@@ -281,13 +292,13 @@ export const OrderCard: React.FC<OrderCardProps> = ({
             exit={{ opacity: 0, scale: 0.95 }}
             className="flex-1 flex flex-col"
           >
-            <div className="grid grid-cols-4 gap-1 flex-1 items-center justify-items-center overflow-y-auto no-scrollbar pt-1">
-              <button onClick={() => handleAvatarSelect(CATEGORY_EMOJIS[appSettings.randomCategory][Math.floor(Math.random() * 16)])} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/50 text-toss-blue transition-transform active:scale-90 border border-toss-blue/10"><Dices size={18} /></button>
+            <div className="grid grid-cols-4 gap-1.5 flex-1 items-center justify-items-center overflow-y-auto no-scrollbar pt-1 pb-2">
+              <button onClick={() => handleAvatarSelect(CATEGORY_EMOJIS[appSettings.randomCategory][Math.floor(Math.random() * 16)])} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/50 text-toss-blue transition-transform active:scale-90 border border-toss-blue/10"><Dices size={20} /></button>
               {appSettings.defaultEmojis.map(emoji => (
-                <button key={emoji} onClick={() => handleAvatarSelect(emoji)} className="w-8 h-8 flex items-center justify-center rounded-xl text-3xl bg-white border border-toss-grey-100 shadow-sm transition-transform active:scale-90 hover:border-toss-blue/30 leading-none">{emoji}</button>
+                <button key={emoji} onClick={() => handleAvatarSelect(emoji)} className="w-9 h-9 flex items-center justify-center rounded-xl text-3xl transition-transform active:scale-90 leading-none">{emoji}</button>
               ))}
             </div>
-            <button onClick={() => onRemove(order.id)} className="w-full h-8 mt-1.5 rounded-xl text-[10px] font-black text-white bg-toss-grey-400 hover:bg-toss-red transition-all shadow-sm">인원 삭제</button>
+            <button onClick={() => onRemove(order.id)} className="w-full h-9 mt-1 rounded-xl text-[10px] font-black text-white bg-toss-grey-400 hover:bg-toss-red transition-all shadow-sm shrink-0">인원 삭제</button>
           </motion.div>
         ) : (
           /* 주문 상세 화면 */
@@ -298,9 +309,42 @@ export const OrderCard: React.FC<OrderCardProps> = ({
             exit={{ opacity: 0, scale: 0.95 }}
             className="flex-1 flex flex-col items-center justify-start h-full relative overflow-visible"
           >
-            <div className="w-full flex flex-col items-center relative py-2 shrink-0 overflow-visible">
-              <div className="relative inline-block mb-1 z-10">
-                <button onClick={handleAvatarClick} className="text-5xl active:scale-95 transition-transform drop-shadow-sm select-none animate-float relative z-10">{order.avatar}</button>
+            <div className="w-full flex flex-col items-center relative py-1 shrink-0 overflow-visible">
+              {/* 상태 표시: 좌측 상단 내부 아이콘 스타일 */}
+              <div className="absolute top-0 left-0 z-[50] pointer-events-none">
+                {isUndecided && (
+                  <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-8 h-8 bg-yellow-400 text-yellow-900 rounded-br-xl rounded-tl-lg shadow-sm border border-yellow-500/20 flex items-center justify-center">
+                    <Clock size={18} strokeWidth={3} />
+                  </motion.div>
+                )}
+                {isNotEating && (
+                  <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-8 h-8 bg-toss-grey-200 text-toss-grey-900 rounded-br-xl rounded-tl-lg shadow-sm border border-toss-grey-300 flex items-center justify-center">
+                    <X size={18} strokeWidth={3} />
+                  </motion.div>
+                )}
+                {isDecided && (
+                  <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-8 h-8 bg-toss-blue text-white rounded-br-xl rounded-tl-lg shadow-sm border border-toss-blue/20 flex items-center justify-center">
+                    <Check size={18} strokeWidth={3} />
+                  </motion.div>
+                )}
+              </div>
+
+              {/* 메모 표시: 우측 상단 내부 정사각형 - 제거됨 (메뉴 하단으로 이동) */}
+
+              <div className="relative inline-block mb-1 z-10 pt-2">
+                <button onClick={handleAvatarClick} className="text-5xl active:scale-95 transition-transform drop-shadow-sm select-none animate-float relative z-10">
+                  {order.avatar}
+                  {/* 말풍선 아이콘: 메모가 있을 때 표시 */}
+                  {allMemos.length > 0 && (
+                    <motion.div 
+                      initial={{ scale: 0, opacity: 0 }} 
+                      animate={{ scale: 1, opacity: 1 }} 
+                      className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-sm border border-toss-blue/20 z-20"
+                    >
+                      <MessageCircle size={10} className="text-toss-blue fill-toss-blue/10" />
+                    </motion.div>
+                  )}
+                </button>
                 <AnimatePresence>
                   {justCompleted && (
                     <motion.div initial={{ opacity: 0, scale: 0.2, x: 0, y: 0 }} animate={{ opacity: 1, scale: 1.1, x: 10, y: -10 }} exit={{ opacity: 0, scale: 0, transition: { duration: 0.2 } }} transition={{ duration: 0.4, ease: "easeOut" }} className="absolute top-0 right-0 z-20 pointer-events-none">
@@ -309,26 +353,6 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                   )}
                 </AnimatePresence>
               </div>
-              <AnimatePresence>
-                {(!isUndecided && !isNotEating) && (
-                  <>
-                    <div className="absolute left-1 top-4 flex flex-col items-end gap-0.5 z-[20]">
-                      {leftMemos.map((m, idx) => (
-                        <motion.div key={`left-${idx}`} initial={{ opacity: 0, x: 5, scale: 0.8 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} onClick={(e) => { e.stopPropagation(); handleDeleteChip(m.subItemId, m.text); }} className="bg-white border border-toss-blue text-toss-blue px-1 py-0.5 rounded shadow-toss-sm relative max-w-[40px] cursor-pointer active:scale-95 transition-all">
-                          <p className="text-[6px] font-black leading-tight whitespace-nowrap truncate">{m.text}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                    <div className="absolute right-1 top-4 flex flex-col items-start gap-0.5 z-[20]">
-                      {rightMemos.map((m, idx) => (
-                        <motion.div key={`right-${idx}`} initial={{ opacity: 0, x: -5, scale: 0.8 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} onClick={(e) => { e.stopPropagation(); handleDeleteChip(m.subItemId, m.text); }} className="bg-white border border-toss-blue text-toss-blue px-1 py-0.5 rounded shadow-toss-sm relative max-w-[40px] cursor-pointer active:scale-95 transition-all">
-                          <p className="text-[6px] font-black leading-tight whitespace-nowrap truncate">{m.text}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </AnimatePresence>
             </div>
 
             <div className="w-full mt-1 flex-1 flex flex-col justify-start overflow-visible">
@@ -349,20 +373,20 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                         </button>
                       </motion.div>
                     ) : (
-                      <motion.div key="expanded" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} transition={{ type: 'spring', damping: 25, stiffness: 180 }} className="flex flex-col gap-0.5 overflow-hidden">
+                      <motion.div key="expanded" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} transition={{ type: 'spring', damping: 25, stiffness: 180 }} className="flex flex-col gap-0.5 overflow-visible">
                         {drinkItems.filter(i => i !== '미정' && i !== '안 먹음').map((menu, idx) => (
-                          <button key={idx} onClick={() => handleInitialOrderFinalize(menu)} className="w-full h-7 bg-white border border-yellow-200 rounded-md font-black text-[9px] text-yellow-800 shrink-0 shadow-sm text-center active:bg-yellow-50">{menu}</button>
+                          <button key={idx} onClick={() => handleInitialOrderFinalize(menu)} className="w-full h-8 bg-white border border-yellow-200 rounded-lg font-black text-[10px] text-yellow-800 shrink-0 shadow-sm text-center active:bg-yellow-50 mb-1">{menu}</button>
                         ))}
                         {isDirectInputMode ? (
-                          <div className="relative h-7 w-full animate-in zoom-in-95 duration-200">
-                            <input type="text" lang="ko" enterKeyHint="done" placeholder="입력..." className="w-full h-full bg-white border border-toss-blue rounded-md pl-2 pr-7 text-[9px] font-black text-toss-grey-900 focus:outline-none placeholder:text-toss-grey-300 text-center" value={customMenuName} onChange={(e) => setCustomMenuName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInitialOrderFinalize(customMenuName)} onBlur={() => !customMenuName && setIsDirectInputMode(false)} autoFocus />
-                            <button onClick={() => handleInitialOrderFinalize(customMenuName)} className="absolute right-1 top-1/2 -translate-y-1/2 text-toss-blue hover:text-toss-blue/70 transition-colors p-1"><Send size={10} strokeWidth={3} /></button>
+                          <div className="relative h-8 w-full animate-in zoom-in-95 duration-200">
+                            <input type="text" lang="ko" enterKeyHint="done" placeholder="입력..." className="w-full h-full bg-white border border-toss-blue rounded-lg pl-2 pr-7 text-[10px] font-black text-toss-grey-900 focus:outline-none placeholder:text-toss-grey-300 text-center" value={customMenuName} onChange={(e) => setCustomMenuName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInitialOrderFinalize(customMenuName)} onBlur={() => !customMenuName && setIsDirectInputMode(false)} autoFocus />
+                            <button onClick={() => handleInitialOrderFinalize(customMenuName)} className="absolute right-1 top-1/2 -translate-y-1/2 text-toss-blue hover:text-toss-blue/70 transition-colors p-1"><Send size={12} strokeWidth={3} /></button>
                           </div>
                         ) : (
                           <>
-                            <button onClick={() => onOpenMenuModal(order.id, '미정', null, 'DESSERT')} className="w-full h-7 bg-amber-500 text-white rounded-md font-black text-[9px] shrink-0 flex items-center justify-center gap-1 active:scale-[0.98] transition-all shadow-sm mb-0.5"><CakeSlice size={10} strokeWidth={3} /> 디저트 보기</button>
-                            <button onClick={() => { setCustomMenuName(""); setIsDirectInputMode(true); }} className="w-full h-7 bg-toss-blue text-white rounded-md font-black text-[9px] shrink-0 flex items-center justify-center gap-1 active:scale-[0.98] transition-all shadow-sm mb-0.5"><Pencil size={8} strokeWidth={3} /> 직접 입력</button>
-                            <button onClick={() => handleInitialOrderFinalize('안 먹음')} className="w-full h-7 bg-toss-grey-200 text-toss-grey-600 rounded-md font-black text-[9px] shrink-0 flex items-center justify-center gap-1 active:scale-[0.98] transition-all shadow-sm"><UserMinus size={10} /> 먹지 않겠대요</button>
+                            <button onClick={() => onOpenMenuModal(order.id, '미정', null, 'DESSERT')} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] shrink-0 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-toss-grey-200 shadow-sm mb-1"><CakeSlice size={12} strokeWidth={3} /> 디저트 보기</button>
+                            <button onClick={() => { setCustomMenuName(""); setIsDirectInputMode(true); }} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] shrink-0 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-toss-grey-200 shadow-sm mb-1"><Pencil size={10} strokeWidth={3} /> 직접 입력</button>
+                            <button onClick={() => handleInitialOrderFinalize('안 먹음')} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] shrink-0 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-toss-grey-200 shadow-sm"><UserMinus size={12} /> 먹지 않겠대요</button>
                           </>
                         )}
                       </motion.div>
@@ -372,56 +396,101 @@ export const OrderCard: React.FC<OrderCardProps> = ({
               ) : isNotEating ? (
                 <div className="w-full flex flex-col items-center justify-center py-2 animate-in fade-in duration-500 overflow-visible px-2">
                   <p className="text-[12px] font-black text-toss-grey-600 mb-2">먹지 않겠대요</p>
-                  <button onClick={handleResetCard} className="w-full h-8 bg-toss-grey-200 text-toss-grey-800 rounded-md font-black text-[10px] active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1 border border-toss-grey-300"><RotateCcw size={12} strokeWidth={3} /> 되돌리기</button>
-                </div>
-              ) : activeMemoSubId ? (
-                <div className="w-full space-y-1 animate-in slide-in-from-right-4 overflow-visible px-1">
-                  <div className="grid grid-cols-2 gap-0.5 max-h-[80px] overflow-y-auto no-scrollbar">
-                    {appSettings.quickMemos.map((memo) => {
-                      const isSelected = order.subItems.find(si => si.id === activeMemoSubId)?.memo?.includes(memo);
-                      return (
-                        <button key={memo} onClick={() => {
-                          const si = order.subItems.find(s => s.id === activeMemoSubId);
-                          if (!si) return;
-                          let m = si.memo ? si.memo.split(',').map(x => x.trim()).filter(Boolean) : [];
-                          m = isSelected ? m.filter(x => x !== memo) : [...m, memo];
-                          onUpdate(order.id, { subItems: order.subItems.map(s => s.id === activeMemoSubId ? { ...s, memo: m.join(', ') } : s) });
-                          startAutoCloseTimer();
-                        }} className={`h-7 rounded-md font-black text-[8px] border transition-all ${isSelected ? 'bg-toss-blue border-toss-blue text-white' : 'bg-white border-toss-grey-100 text-toss-grey-700'}`}>{memo}</button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex flex-col gap-1 mt-1">
-                    {isMemoDirectInputMode ? (
-                      <div className="relative h-7 w-full animate-in zoom-in-95 duration-200">
-                        <input type="text" lang="ko" enterKeyHint="done" placeholder="메모 입력..." className="w-full h-full bg-white border border-toss-blue rounded-md pl-2 pr-7 text-[9px] font-black text-toss-grey-900 focus:outline-none placeholder:text-toss-grey-300 text-center" value={customMemo} onChange={(e) => setCustomMemo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCustomMemo()} onBlur={() => !customMemo && setIsDirectInputMode(false)} autoFocus />
-                        <button onClick={handleAddCustomMemo} className="absolute right-1 top-1/2 -translate-y-1/2 text-toss-blue hover:text-toss-blue/70 transition-colors p-1"><Send size={10} strokeWidth={3} /></button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setIsMemoDirectInputMode(true)} className="w-full h-7 bg-toss-blue text-white rounded-md font-black text-[9px] shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-all"><Pencil size={8} strokeWidth={3} /> 직접 입력</button>
-                    )}
-                    <button onClick={() => { setActiveMemoSubId(null); setIsMemoDirectInputMode(false); }} className="w-full h-7 bg-toss-grey-900 text-white rounded-md font-black text-[10px] shadow-sm active:scale-95 transition-all flex flex-col items-center justify-center leading-tight relative overflow-hidden group">
-                       <div className="absolute inset-0 bg-white/10 w-full scale-x-0 origin-left" style={{ transform: `scaleX(${1 - (timeLeft / 5.0)})`, transition: timeLeft === 5.0 ? 'none' : 'transform 0.1s linear' }} />
-                       <span className="relative z-10">{timeLeft === 5.0 ? "완료" : `${timeLeft.toFixed(1)}초 후 자동 완료`}</span>
-                    </button>
-                  </div>
+                  <button onClick={handleUndoOrder} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 border border-toss-grey-200"><RotateCcw size={12} strokeWidth={3} /> 되돌리기</button>
                 </div>
               ) : (
-                <div className="w-full space-y-1 overflow-visible px-1">
-                  {order.subItems.map(si => (
-                    <div key={si.id} className="flex flex-col gap-1 animate-in fade-in duration-300 overflow-visible">
+                <div className="w-full space-y-1.5 overflow-visible px-1">
+                  {order.subItems.map((si, idx) => (
+                    <motion.div layout key={si.id} className="flex flex-col gap-1.5 animate-in fade-in duration-300 overflow-visible">
+                      {idx > 0 && <div className="w-full h-[1px] bg-toss-grey-100 my-0.5" />}
                       <div className="relative w-full h-7">
                         <button onClick={() => onOpenMenuModal(order.id, si.itemName, si.id, si.type)} className="w-full h-full bg-toss-grey-100 rounded-lg flex items-center justify-center border border-toss-grey-200 shadow-sm active:scale-95 transition-all px-6"><span className="text-[11px] font-black text-toss-grey-800 truncate text-center">{si.itemName}</span></button>
-                        <button onClick={(e) => { e.stopPropagation(); setActiveMemoSubId(si.id); startAutoCloseTimer(); }} className="absolute right-1 top-1/2 -translate-y-1/2 text-toss-grey-300 hover:text-toss-blue p-1 active:scale-90 transition-transform"><MessageCircle size={10} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); setActiveMemoSubId(si.id === activeMemoSubId ? null : si.id); startAutoCloseTimer(); }} className={`absolute right-1 top-1/2 -translate-y-1/2 p-1 active:scale-90 transition-transform ${activeMemoSubId === si.id ? 'text-toss-blue' : 'text-toss-grey-300 hover:text-toss-blue'}`}><MessageCircle size={10} /></button>
                       </div>
+
+                      {/* 통합 메모 영역: 펼쳐졌을 때는 선택 그리드, 닫혔을 때는 선택된 칩만 표시 */}
+                      <div className="w-full overflow-visible">
+                        <motion.div 
+                          layout
+                          className="grid grid-cols-2 gap-1.5 w-full"
+                        >
+                          <AnimatePresence initial={false}>
+                            {(() => {
+                              const isExpanded = activeMemoSubId === si.id;
+                              const selectedMemos = si.memo ? si.memo.split(',').map(x => x.trim()).filter(Boolean) : [];
+                              const visibleMemos = isExpanded ? localQuickMemos : selectedMemos;
+                              
+                              return visibleMemos.map((memo, idx, arr) => {
+                                const isSelected = selectedMemos.includes(memo);
+                                const isFullWidth = idx === arr.length - 1 && arr.length % 2 !== 0;
+                                
+                                return (
+                                  <motion.button
+                                    layout
+                                    key={memo}
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    transition={{ duration: 0.2 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (isExpanded) {
+                                        let m = [...selectedMemos];
+                                        m = isSelected ? m.filter(x => x !== memo) : [...m, memo];
+                                        onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, memo: m.join(', ') } : s) });
+                                        startAutoCloseTimer();
+                                      } else {
+                                        handleDeleteChip(si.id, memo);
+                                      }
+                                    }}
+                                    className={`h-7 flex items-center justify-center rounded-lg border transition-all text-[9px] font-black shadow-sm active:scale-95 ${
+                                      isSelected 
+                                        ? 'bg-amber-50 border-amber-200 text-amber-900' 
+                                        : 'bg-white border-toss-grey-100 text-toss-grey-700'
+                                    } ${isFullWidth ? 'col-span-2' : ''}`}
+                                  >
+                                    {memo}
+                                  </motion.button>
+                                );
+                              });
+                            })()}
+                          </AnimatePresence>
+                        </motion.div>
+
+                        <AnimatePresence>
+                          {activeMemoSubId === si.id && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden mt-1.5 space-y-1.5"
+                            >
+                              {isMemoDirectInputMode ? (
+                                <div className="relative h-8 w-full animate-in zoom-in-95 duration-200">
+                                  <input type="text" lang="ko" enterKeyHint="done" placeholder="메모 입력..." className="w-full h-full bg-white border border-toss-blue rounded-lg pl-2 pr-7 text-[10px] font-black text-toss-grey-900 focus:outline-none placeholder:text-toss-grey-300 text-center" value={customMemo} onChange={(e) => setCustomMemo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCustomMemo()} onBlur={() => !customMemo && setIsMemoDirectInputMode(false)} autoFocus />
+                                  <button onClick={handleAddCustomMemo} className="absolute right-1 top-1/2 -translate-y-1/2 text-toss-blue hover:text-toss-blue/70 transition-colors p-1"><Send size={12} strokeWidth={3} /></button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setIsMemoDirectInputMode(true)} className="w-full h-8 bg-toss-blue text-white rounded-lg font-black text-[10px] shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"><Pencil size={10} strokeWidth={3} /> 직접 입력</button>
+                              )}
+                              <button onClick={() => { setActiveMemoSubId(null); setIsMemoDirectInputMode(false); }} className="w-full h-8 bg-toss-grey-900 text-white rounded-lg font-black text-[10px] shadow-sm active:scale-95 transition-all flex flex-col items-center justify-center leading-tight relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-white/10 w-full scale-x-0 origin-left" style={{ transform: `scaleX(${1 - (timeLeft / 5.0)})`, transition: timeLeft === 5.0 ? 'none' : 'transform 0.1s linear' }} />
+                                <span className="relative z-10">{timeLeft === 5.0 ? "완료" : `${timeLeft.toFixed(1)}초 후 자동 완료`}</span>
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
                       {si.itemName !== '미정' && si.itemName !== '안 먹음' && si.type === 'DRINK' && (
-                        <div className="flex flex-col gap-1">
-                          <div className="flex gap-1 h-7">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex gap-1.5 h-7">
                             <button onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, temperature: 'HOT' } : s) })} className={`flex-1 flex items-center justify-center gap-1 rounded-lg transition-all border ${si.temperature === 'HOT' ? 'bg-toss-redLight border-toss-red text-toss-red' : 'bg-white border-toss-grey-100 text-toss-grey-300'}`}><Flame size={10} strokeWidth={3} /><span className="text-[8px] font-black">HOT</span></button>
                             <button onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, temperature: 'ICE' } : s) })} className={`flex-1 flex items-center justify-center gap-1 rounded-lg transition-all border ${si.temperature === 'ICE' ? 'bg-toss-blueLight border-toss-blue text-toss-blue' : 'bg-white border-toss-grey-100 text-toss-grey-300'}`}><Snowflake size={10} strokeWidth={3} /><span className="text-[8px] font-black">ICE</span></button>
                           </div>
+                          {/* 메모 칩: 제거됨 (통합 메모 영역으로 이동) */}
                           {appSettings.showDrinkSize && (
-                            <div className="flex gap-1 h-7">
+                            <div className="flex gap-1.5 h-7">
                               {(['Tall', 'Grande', 'Venti'] as DrinkSize[]).map((sz) => {
                                 const isSizeSelected = (si.size || 'Tall') === sz;
                                 return (
@@ -438,11 +507,11 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                           )}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
-                  <div className="grid grid-cols-2 gap-1.5 mt-2">
-                    <button onClick={() => onOpenMenuModal(order.id, '미정', null, 'DESSERT')} className="h-8 bg-toss-blueLight text-toss-blue rounded-xl font-black text-[10px] flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm border border-toss-blue/5"><Plus size={12} strokeWidth={3} /> 주문 추가</button>
-                    <button onClick={handleResetCard} className="h-8 bg-toss-grey-200 text-toss-grey-800 rounded-xl font-black text-[10px] flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm border border-toss-grey-300"><RotateCcw size={12} strokeWidth={3} /> 되돌리기</button>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <button onClick={() => onOpenMenuModal(order.id, '미정', null, 'DESSERT')} className="flex-1 h-8 bg-toss-blueLight text-toss-blue rounded-lg font-black text-[10px] flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm border border-toss-blue/10"><Plus size={12} strokeWidth={3} /> 추가</button>
+                    <button onClick={handleUndoOrder} className="w-8 h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black flex items-center justify-center active:scale-95 transition-all shadow-sm border border-toss-grey-200"><RotateCcw size={12} strokeWidth={3} /></button>
                   </div>
                 </div>
               )}

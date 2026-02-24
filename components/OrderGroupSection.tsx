@@ -51,7 +51,7 @@ export const OrderGroupSection: React.FC<OrderGroupSectionProps> = ({
         <div className="grid gap-2 grid-cols-2 items-stretch justify-items-stretch relative overflow-visible">
           <AnimatePresence mode="popLayout">
             {individualItems.map((order) => (
-              <motion.div key={order.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative h-full min-h-[110px] overflow-visible">
+              <motion.div key={order.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative min-h-[110px] overflow-visible">
                 <OrderCard 
                   order={order} 
                   drinkItems={drinkMenuItems} 
