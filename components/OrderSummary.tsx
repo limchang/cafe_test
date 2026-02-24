@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderGroup, AggregatedOrder, AppSettings, ItemType } from '../types.ts';
-import { ChevronUp, ChevronDown, Coffee, Users, LayoutGrid, List, CheckCircle2, Save, UserMinus, Pencil, Check } from 'lucide-react';
+import { ChevronUp, ChevronDown, Coffee, Users, LayoutGrid, List, CheckCircle2, Save, UserMinus, Pencil, Check, Copy } from 'lucide-react';
 
 interface OrderSummaryProps {
   groups: OrderGroup[];
@@ -62,6 +62,12 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [tempGroupName, setTempGroupName] = useState("");
   const [isNotEatingCollapsed, setIsNotEatingCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleCopySummary = () => {
+    const text = viewMode === 'all' ? allSummary : tableSummary;
+    navigator.clipboard.writeText(text);
+    alert('주문 내역이 클립보드에 복사되었습니다!');
+  };
 
   const checkShadows = () => {
     if (scrollRef.current) {
@@ -386,7 +392,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           {showBottomShadow && <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />}
         </div>
 
-        <div className="px-4 py-5 bg-white border-t border-toss-grey-100 shrink-0 space-y-4 shadow-[0_-8px_32px_rgba(0,0,0,0.04)]">
+        <div className="px-4 py-5 bg-white border-t border-toss-grey-100 shrink-0 space-y-3 shadow-[0_-8px_32px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between px-1">
             <span className="text-[11px] font-black text-toss-grey-400 uppercase tracking-[0.2em]">Total Items</span>
             <div className="flex items-baseline gap-1">
@@ -394,12 +400,20 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               <span className="text-[13px] font-black text-toss-grey-400 uppercase">개</span>
             </div>
           </div>
-          <button 
-            onClick={() => onSaveHistory(viewMode === 'all' ? allSummary : tableSummary, totalItemCount)}
-            className="w-full h-14 bg-toss-grey-900 text-white rounded-[22px] font-black text-[16px] flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all hover:bg-black"
-          >
-            <Save size={20} /> 주문 내역 저장하기
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleCopySummary}
+              className="flex-1 h-14 bg-toss-blueLight text-toss-blue rounded-[22px] font-black text-[15px] flex items-center justify-center gap-2 active:scale-[0.98] transition-all border border-toss-blue/10"
+            >
+              <Copy size={18} /> 복사
+            </button>
+            <button 
+              onClick={() => onSaveHistory(viewMode === 'all' ? allSummary : tableSummary, totalItemCount)}
+              className="flex-[2] h-14 bg-toss-grey-900 text-white rounded-[22px] font-black text-[15px] flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all hover:bg-black"
+            >
+              <Save size={18} /> 히스토리 저장
+            </button>
+          </div>
         </div>
       </motion.div>
     </>

@@ -415,9 +415,12 @@ function App() {
 
   return (
     <div className="min-h-screen pb-24 bg-toss-bg text-toss-grey-900 flex flex-col relative overflow-x-hidden">
-      <header className="bg-white/90 backdrop-blur-lg sticky top-0 z-[50] border-b border-toss-grey-100 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center justify-between">
-          <h1 className="text-[16px] font-black text-toss-grey-900 tracking-tighter italic select-none">CafeSync</h1>
+      <header className="bg-white/95 backdrop-blur-xl sticky top-0 z-[100] border-b border-toss-grey-100 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
+          <div className="flex flex-col">
+            <h1 className="text-[18px] font-black text-toss-grey-900 tracking-tighter select-none">카페싱크</h1>
+            <p className="text-[10px] font-bold text-toss-blue -mt-1 opacity-80">단체 주문 도우미</p>
+          </div>
           <div className="relative">
             <button onClick={() => setIsMainMenuOpen(!isMainMenuOpen)} className={`p-1.5 rounded-xl transition-all ${isMainMenuOpen ? 'bg-toss-blue text-white shadow-lg' : 'bg-toss-grey-100 text-toss-grey-600'}`}>
               {isMainMenuOpen ? <X size={16} /> : <Menu size={16} />}
