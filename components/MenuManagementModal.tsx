@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { X, Plus, Coffee, CakeSlice, Trash2, GripVertical, UtensilsCrossed, Search, PencilLine } from 'lucide-react';
+import { X, Plus, Coffee, CakeSlice, Trash2, GripVertical, UtensilsCrossed, Search, PencilLine, Check } from 'lucide-react';
 import { 
   DndContext, 
   closestCenter, 
@@ -26,16 +26,21 @@ interface MenuManagementModalProps {
   onClose: () => void;
   drinkItems: string[];
   dessertItems: string[];
+  checkedDrinkItems: string[];
   onAdd: (item: string, type: ItemType) => void;
   onRemove: (item: string, type: ItemType) => void;
+  onUpdateChecked: (item: string, checked: boolean) => void;
   onUpdateMenuList: (newList: string[], type: ItemType) => void;
 }
 
 const SortableMenuRow: React.FC<{
   id: string;
   item: string;
+  isChecked?: boolean;
+  showCheck?: boolean;
   onRemove: () => void;
-}> = ({ id, item, onRemove }) => {
+  onToggleCheck?: () => void;
+}> = ({ id, item, isChecked, showCheck, onRemove, onToggleCheck }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -45,12 +50,22 @@ const SortableMenuRow: React.FC<{
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-1.5 group p-0.5">
-      <div {...attributes} {...listeners} className="p-1.5 cursor-grab text-toss-grey-300 hover:text-toss-blue transition-colors">
+    <div ref={setNodeRef} style={style} className="flex items-center gap-1 group p-0.5">
+      <div {...attributes} {...listeners} className="p-1 cursor-grab text-toss-grey-300 hover:text-toss-blue transition-colors">
         <GripVertical size={14} />
       </div>
-      <div className="flex-1 bg-toss-grey-50 border border-toss-grey-100 rounded-xl px-3 py-2.5 flex items-center justify-between shadow-sm">
-        <span className="text-[12px] font-bold text-toss-grey-800">{item}</span>
+      <div className={`flex-1 bg-toss-grey-50 border rounded-xl px-3 py-2.5 flex items-center justify-between shadow-sm transition-all ${isChecked ? 'border-toss-blue/30 bg-toss-blueLight/30' : 'border-toss-grey-100'}`}>
+        <div className="flex items-center gap-2">
+          {showCheck && (
+            <button 
+              onClick={onToggleCheck}
+              className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${isChecked ? 'bg-toss-blue text-white' : 'bg-white border border-toss-grey-200 text-transparent'}`}
+            >
+              <Check size={12} strokeWidth={4} />
+            </button>
+          )}
+          <span className={`text-[12px] font-bold transition-colors ${isChecked ? 'text-toss-blue' : 'text-toss-grey-800'}`}>{item}</span>
+        </div>
         <button onClick={onRemove} className="p-1 text-toss-grey-300 hover:text-toss-red transition-colors">
           <Trash2 size={14} />
         </button>
@@ -60,7 +75,7 @@ const SortableMenuRow: React.FC<{
 };
 
 export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({
-  isOpen, onClose, drinkItems, dessertItems, onAdd, onRemove, onUpdateMenuList
+  isOpen, onClose, drinkItems, dessertItems, checkedDrinkItems, onAdd, onRemove, onUpdateChecked, onUpdateMenuList
 }) => {
   const [activeTab, setActiveTab] = useState<ItemType>('DRINK');
   const [newItemName, setNewItemName] = useState("");
@@ -172,7 +187,10 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({
                     key={item} 
                     id={item} 
                     item={item} 
+                    isChecked={activeTab === 'DRINK' && checkedDrinkItems.includes(item)}
+                    showCheck={activeTab === 'DRINK'}
                     onRemove={() => onRemove(item, activeTab)} 
+                    onToggleCheck={() => onUpdateChecked(item, !checkedDrinkItems.includes(item))}
                   />
                 ))}
               </SortableContext>

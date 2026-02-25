@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderGroup, AggregatedOrder, AppSettings, ItemType } from '../types.ts';
-import { ChevronUp, ChevronDown, Coffee, Users, LayoutGrid, List, CheckCircle2, Save, UserMinus, Pencil, Check, Copy } from 'lucide-react';
+import { ChevronUp, ChevronDown, Coffee, Users, LayoutGrid, List, CheckCircle2, Save, UserMinus, Pencil, Check, Copy, Trash2, X } from 'lucide-react';
 
 interface OrderSummaryProps {
   groups: OrderGroup[];
@@ -10,6 +10,8 @@ interface OrderSummaryProps {
   onJumpToOrder: (groupId: string, personId: string) => void;
   onUpdateGroupName?: (groupId: string, newName: string) => void;
   onSetNotEating?: (personIds: string[]) => void;
+  onRemoveUndecided?: (personIds: string[]) => void;
+  onRemoveOrder?: (personId: string) => void;
   appSettings: AppSettings;
   expandState: 'collapsed' | 'expanded' | 'fullscreen';
   onSetExpandState: (state: 'collapsed' | 'expanded' | 'fullscreen') => void;
@@ -52,7 +54,7 @@ const GroupedMemo: React.FC<GroupedMemoProps> = ({ memo, people, onJump }) => {
 type ViewMode = 'all' | 'table';
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({ 
-  groups, onSaveHistory, onJumpToOrder, onUpdateGroupName, onSetNotEating, appSettings, expandState, onSetExpandState 
+  groups, onSaveHistory, onJumpToOrder, onUpdateGroupName, onSetNotEating, onRemoveUndecided, onRemoveOrder, appSettings, expandState, onSetExpandState 
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [showTopShadow, setShowTopShadow] = useState(false);
@@ -192,7 +194,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   if (expandState === 'collapsed') {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-[100] px-4 pb-4 pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-[2000] px-4 pb-4 pointer-events-none">
         <button 
           onClick={() => onSetExpandState('expanded')}
           className="w-full max-w-lg mx-auto bg-white border border-toss-grey-100 rounded-[28px] shadow-toss-elevated p-3.5 flex items-center justify-between pointer-events-auto active:scale-[0.98] transition-all"
@@ -220,13 +222,13 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[150]" onClick={() => onSetExpandState('collapsed')} />
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[2000]" onClick={() => onSetExpandState('collapsed')} />
       <motion.div 
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed left-0 right-0 bottom-0 z-[160] bg-white shadow-toss-elevated flex flex-col max-w-lg mx-auto rounded-t-[28px] h-[85vh]"
+        className="fixed left-0 right-0 bottom-0 z-[2001] bg-white shadow-toss-elevated flex flex-col max-w-lg mx-auto rounded-t-[28px] h-[85vh]"
       >
         <div className="flex flex-col shrink-0">
           <button onClick={() => onSetExpandState('collapsed')} className="w-full flex justify-center py-2">
@@ -255,23 +257,47 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               <div className="p-3 bg-yellow-50 rounded-2xl border border-yellow-200 shadow-sm animate-in slide-in-from-top-2">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[11px] font-black text-yellow-800">미정 인원 바로가기</span>
-                  <button 
-                    onClick={() => onSetNotEating?.(undecidedPersons.map(p => p.id))}
-                    className="px-2 py-1 bg-white border border-yellow-300 rounded-lg text-[10px] font-black text-yellow-900 shadow-sm flex items-center gap-1 active:scale-95 transition-all"
-                  >
-                    <UserMinus size={12} /> 모두 안먹음 처리
-                  </button>
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={() => onSetNotEating?.(undecidedPersons.map(p => p.id))}
+                      className="px-2 py-1 bg-white border border-yellow-300 rounded-lg text-[10px] font-black text-yellow-900 shadow-sm flex items-center gap-1 active:scale-95 transition-all"
+                    >
+                      <UserMinus size={12} /> 모두 안먹음 처리
+                    </button>
+                    <button 
+                      onClick={() => onRemoveUndecided?.(undecidedPersons.map(p => p.id))}
+                      className="px-2 py-1 bg-white border border-toss-red/30 rounded-lg text-[10px] font-black text-toss-red shadow-sm flex items-center gap-1 active:scale-95 transition-all"
+                    >
+                      <Trash2 size={12} /> 미정 인원 삭제
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {undecidedPersons.map((p) => (
-                    <button 
-                      key={p.id}
-                      onClick={() => { onJumpToOrder(p.groupId, p.id); onSetExpandState('collapsed'); }}
-                      className="flex flex-col items-center gap-0.5 active:scale-90 transition-transform"
-                    >
-                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-yellow-300/30">{p.avatar || "👤"}</div>
+                    <div key={p.id} className="flex flex-col items-center gap-0.5 group relative">
+                      <button 
+                        onClick={() => { onJumpToOrder(p.groupId, p.id); onSetExpandState('collapsed'); }}
+                        className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-yellow-300/30 active:scale-90 transition-transform"
+                      >
+                        {p.avatar || "👤"}
+                      </button>
                       <span className="text-[8px] font-black text-yellow-600">이동</span>
-                    </button>
+                      
+                      <div className="absolute -top-1 -right-1 flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onSetNotEating?.([p.id]); }}
+                          className="w-4 h-4 bg-toss-grey-900 text-white rounded-full flex items-center justify-center shadow-md hover:bg-black"
+                        >
+                          <X size={8} strokeWidth={4} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); onRemoveOrder?.(p.id); }}
+                          className="w-4 h-4 bg-toss-red text-white rounded-full flex items-center justify-center shadow-md hover:bg-toss-red/80"
+                        >
+                          <Trash2 size={8} strokeWidth={4} />
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -279,9 +305,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
 
           <div className="px-4 mb-2 shrink-0">
-            <div className="flex p-0.5 bg-toss-grey-100 rounded-[16px]">
-              <button onClick={() => setViewMode('all')} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[12px] text-[12px] font-black transition-all ${viewMode === 'all' ? 'bg-white text-toss-blue shadow-sm' : 'text-toss-grey-400'}`}><LayoutGrid size={14} /> 합계</button>
-              <button onClick={() => setViewMode('table')} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[12px] text-[12px] font-black transition-all ${viewMode === 'table' ? 'bg-white text-toss-blue shadow-sm' : 'text-toss-grey-400'}`}><List size={14} /> 테이블</button>
+            <div className="flex p-1 bg-toss-grey-100 rounded-[20px]">
+              <button onClick={() => setViewMode('all')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-[16px] text-[13px] font-black transition-all ${viewMode === 'all' ? 'bg-white text-toss-blue shadow-sm' : 'text-toss-grey-400'}`}><LayoutGrid size={14} /> 합계</button>
+              <button onClick={() => setViewMode('table')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-[16px] text-[13px] font-black transition-all ${viewMode === 'table' ? 'bg-white text-toss-blue shadow-sm' : 'text-toss-grey-400'}`}><List size={14} /> 테이블</button>
             </div>
           </div>
         </div>

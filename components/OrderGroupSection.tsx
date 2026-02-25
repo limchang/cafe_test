@@ -22,6 +22,7 @@ interface OrderGroupSectionProps {
   appSettings: AppSettings & { isSharedSyncActive?: boolean };
   onRemoveGroup: () => void;
   onInputModeChange?: (isActive: boolean) => void;
+  onUpdateCheckedItems?: (name: string, checked: boolean) => void;
 }
 
 export const OrderGroupSection: React.FC<OrderGroupSectionProps> = ({
@@ -39,7 +40,8 @@ export const OrderGroupSection: React.FC<OrderGroupSectionProps> = ({
   onCopyGroupItemToAll,
   onDeleteGroupItemFromAll,
   appSettings,
-  onInputModeChange
+  onInputModeChange,
+  onUpdateCheckedItems
 }) => {
   const individualItems = useMemo(() => group.items.filter(item => item.avatar !== '😋'), [group.items]);
   const sharedItem = useMemo(() => group.items.find(item => item.avatar === '😋'), [group.items]);
@@ -66,6 +68,7 @@ export const OrderGroupSection: React.FC<OrderGroupSectionProps> = ({
                   onDeleteGroupItemFromAll={onDeleteGroupItemFromAll}
                   appSettings={appSettings}
                   onInputModeChange={onInputModeChange}
+                  onUpdateCheckedItems={onUpdateCheckedItems}
                 />
               </motion.div>
             ))}
@@ -100,6 +103,7 @@ export const OrderGroupSection: React.FC<OrderGroupSectionProps> = ({
                 onDeleteGroupItemFromAll={onDeleteGroupItemFromAll}
                 appSettings={appSettings}
                 onInputModeChange={onInputModeChange}
+                onUpdateCheckedItems={onUpdateCheckedItems}
               />
             ) : (
               <button onClick={() => addSharedMenuItem(group.id)} className="w-full h-10 border-2 border-dashed border-toss-grey-200 bg-toss-grey-50 text-toss-grey-400 rounded-[14px] flex items-center justify-center gap-1 hover:bg-toss-grey-100 active:scale-95 transition-all">

@@ -23,6 +23,7 @@ interface OrderCardProps {
   onOpenMenuModal: (orderId: string, currentItem: string, subItemId?: string | null, type?: ItemType) => void;
   appSettings: AppSettings & { isSharedSyncActive?: boolean };
   onInputModeChange?: (isActive: boolean) => void;
+  onUpdateCheckedItems?: (name: string, checked: boolean) => void;
 }
 
 const CATEGORY_EMOJIS: Record<EmojiCategory, string[]> = {
@@ -43,7 +44,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({
   highlighted,
   onOpenMenuModal,
   appSettings,
-  onInputModeChange
+  onInputModeChange,
+  onUpdateCheckedItems
 }) => {
   const [showAvatarPicker, setShowAvatarPicker] = useState(!order.avatar && order.avatar !== '😋');
   const [isMoreExpanded, setIsMoreExpanded] = useState(false);
@@ -130,8 +132,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({
   const allMemos = memoChips;
 
   const quickMenuOptions = useMemo(() => {
-    return drinkItems.filter(i => i !== '미정' && i !== '안 먹음').slice(0, 3);
-  }, [drinkItems]);
+    return appSettings.checkedDrinkItems || [];
+  }, [appSettings.checkedDrinkItems]);
 
   const handleAvatarSelect = (emoji: string) => {
     onUpdate(order.id, { avatar: emoji });
@@ -140,7 +142,10 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
   const handleInitialOrderFinalize = (menuName?: string) => {
     const finalName = menuName || '미정';
-    if (finalName !== '미정' && finalName !== '안 먹음' && !drinkItems.includes(finalName)) onAddMenuItem(finalName, 'DRINK');
+    if (finalName !== '미정' && finalName !== '안 먹음' && !drinkItems.includes(finalName)) {
+      onAddMenuItem(finalName, 'DRINK');
+      onUpdateCheckedItems?.(finalName, true);
+    }
     const isIceDefault = finalName.includes('스무디') || finalName.includes('아이스');
     onUpdate(order.id, { 
       subItems: [{ 
@@ -384,8 +389,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                           </div>
                         ) : (
                           <>
-                            <button onClick={() => onOpenMenuModal(order.id, '미정', null, 'DESSERT')} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] shrink-0 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-toss-grey-200 shadow-sm mb-1"><CakeSlice size={12} strokeWidth={3} /> 디저트 보기</button>
                             <button onClick={() => { setCustomMenuName(""); setIsDirectInputMode(true); }} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] shrink-0 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-toss-grey-200 shadow-sm mb-1"><Pencil size={10} strokeWidth={3} /> 직접 입력</button>
+                            <button onClick={() => onOpenMenuModal(order.id, '미정', null, 'DESSERT')} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] shrink-0 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-toss-grey-200 shadow-sm mb-1"><UtensilsCrossed size={12} strokeWidth={3} /> 메뉴판 보기</button>
                             <button onClick={() => handleInitialOrderFinalize('안 먹음')} className="w-full h-8 bg-toss-grey-100 text-toss-grey-700 rounded-lg font-black text-[10px] shrink-0 flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all border border-toss-grey-200 shadow-sm"><UserMinus size={12} /> 먹지 않겠대요</button>
                           </>
                         )}
@@ -401,20 +406,50 @@ export const OrderCard: React.FC<OrderCardProps> = ({
               ) : (
                 <div className="w-full space-y-1.5 overflow-visible px-1">
                   {order.subItems.map((si, idx) => (
-                    <motion.div layout key={si.id} className="flex flex-col gap-1.5 animate-in fade-in duration-300 overflow-visible">
+                    <div key={si.id} className="flex flex-col gap-1.5 animate-in fade-in duration-300 overflow-visible">
                       {idx > 0 && <div className="w-full h-[1px] bg-toss-grey-100 my-0.5" />}
-                      <div className="relative w-full h-7">
-                        <button onClick={() => onOpenMenuModal(order.id, si.itemName, si.id, si.type)} className="w-full h-full bg-toss-grey-100 rounded-lg flex items-center justify-center border border-toss-grey-200 shadow-sm active:scale-95 transition-all px-6"><span className="text-[11px] font-black text-toss-grey-800 truncate text-center">{si.itemName}</span></button>
-                        <button onClick={(e) => { e.stopPropagation(); setActiveMemoSubId(si.id === activeMemoSubId ? null : si.id); startAutoCloseTimer(); }} className={`absolute right-1 top-1/2 -translate-y-1/2 p-1 active:scale-90 transition-transform ${activeMemoSubId === si.id ? 'text-toss-blue' : 'text-toss-grey-300 hover:text-toss-blue'}`}><MessageCircle size={10} /></button>
+                      <div className="relative w-full h-7 flex items-center justify-center">
+                        <button onClick={() => onOpenMenuModal(order.id, si.itemName, si.id, si.type)} className="w-full h-full bg-toss-grey-100 rounded-lg flex items-center justify-center border border-toss-grey-200 shadow-sm active:scale-95 transition-all px-8">
+                          <span className="text-[11px] font-black text-toss-grey-800 truncate text-center w-full">{si.itemName}</span>
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setActiveMemoSubId(si.id === activeMemoSubId ? null : si.id); startAutoCloseTimer(); }} className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 active:scale-90 transition-transform ${activeMemoSubId === si.id ? 'text-toss-blue' : 'text-toss-grey-300 hover:text-toss-blue'}`}>
+                          <MessageCircle size={10} />
+                        </button>
                       </div>
 
+                      {si.itemName !== '미정' && si.itemName !== '안 먹음' && si.type === 'DRINK' && (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex gap-1.5 h-7">
+                            <button onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, temperature: 'HOT' } : s) })} className={`flex-1 flex items-center justify-center gap-1 rounded-lg transition-all border ${si.temperature === 'HOT' ? 'bg-toss-redLight border-toss-red text-toss-red' : 'bg-white border-toss-grey-100 text-toss-grey-300'}`}><Flame size={10} strokeWidth={3} /><span className="text-[8px] font-black">HOT</span></button>
+                            <button onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, temperature: 'ICE' } : s) })} className={`flex-1 flex items-center justify-center gap-1 rounded-lg transition-all border ${si.temperature === 'ICE' ? 'bg-toss-blueLight border-toss-blue text-toss-blue' : 'bg-white border-toss-grey-100 text-toss-grey-300'}`}><Snowflake size={10} strokeWidth={3} /><span className="text-[8px] font-black">ICE</span></button>
+                          </div>
+                          {appSettings.showDrinkSize && (
+                            <div className="flex gap-1.5 h-7">
+                              {(['Tall', 'Grande', 'Venti'] as DrinkSize[]).map((sz) => {
+                                const isSizeSelected = (si.size || 'Tall') === sz;
+                                return (
+                                  <button 
+                                    key={sz} 
+                                    onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, size: sz } : s) })} 
+                                    className={`flex-1 flex items-center justify-center rounded-lg border transition-all text-[8px] font-black ${isSizeSelected ? 'bg-toss-blue border-toss-blue text-white shadow-sm' : 'bg-white border-toss-grey-100 text-toss-grey-400'}`}
+                                  >
+                                    {sz.charAt(0)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* 통합 메모 영역: 펼쳐졌을 때는 선택 그리드, 닫혔을 때는 선택된 칩만 표시 */}
-                      <div className="w-full overflow-visible">
+                      <div className="w-full overflow-hidden">
                         <motion.div 
                           layout
+                          transition={{ duration: 0.25, ease: "easeInOut" }}
                           className="grid grid-cols-2 gap-1.5 w-full"
                         >
-                          <AnimatePresence initial={false}>
+                          <AnimatePresence initial={false} mode="popLayout">
                             {(() => {
                               const isExpanded = activeMemoSubId === si.id;
                               const selectedMemos = si.memo ? si.memo.split(',').map(x => x.trim()).filter(Boolean) : [];
@@ -431,7 +466,10 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.2 }}
+                                    transition={{ 
+                                      opacity: { duration: 0.2 },
+                                      layout: { duration: 0.25, ease: "easeInOut" }
+                                    }}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       if (isExpanded) {
@@ -443,7 +481,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                                         handleDeleteChip(si.id, memo);
                                       }
                                     }}
-                                    className={`h-7 flex items-center justify-center rounded-lg border transition-all text-[9px] font-black shadow-sm active:scale-95 ${
+                                    className={`h-7 flex items-center justify-center rounded-lg border font-black shadow-sm active:scale-95 text-[9px] transition-colors ${
                                       isSelected 
                                         ? 'bg-amber-50 border-amber-200 text-amber-900' 
                                         : 'bg-white border-toss-grey-100 text-toss-grey-700'
@@ -481,33 +519,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                           )}
                         </AnimatePresence>
                       </div>
-
-                      {si.itemName !== '미정' && si.itemName !== '안 먹음' && si.type === 'DRINK' && (
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex gap-1.5 h-7">
-                            <button onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, temperature: 'HOT' } : s) })} className={`flex-1 flex items-center justify-center gap-1 rounded-lg transition-all border ${si.temperature === 'HOT' ? 'bg-toss-redLight border-toss-red text-toss-red' : 'bg-white border-toss-grey-100 text-toss-grey-300'}`}><Flame size={10} strokeWidth={3} /><span className="text-[8px] font-black">HOT</span></button>
-                            <button onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, temperature: 'ICE' } : s) })} className={`flex-1 flex items-center justify-center gap-1 rounded-lg transition-all border ${si.temperature === 'ICE' ? 'bg-toss-blueLight border-toss-blue text-toss-blue' : 'bg-white border-toss-grey-100 text-toss-grey-300'}`}><Snowflake size={10} strokeWidth={3} /><span className="text-[8px] font-black">ICE</span></button>
-                          </div>
-                          {/* 메모 칩: 제거됨 (통합 메모 영역으로 이동) */}
-                          {appSettings.showDrinkSize && (
-                            <div className="flex gap-1.5 h-7">
-                              {(['Tall', 'Grande', 'Venti'] as DrinkSize[]).map((sz) => {
-                                const isSizeSelected = (si.size || 'Tall') === sz;
-                                return (
-                                  <button 
-                                    key={sz} 
-                                    onClick={() => onUpdate(order.id, { subItems: order.subItems.map(s => s.id === si.id ? { ...s, size: sz } : s) })} 
-                                    className={`flex-1 flex items-center justify-center rounded-lg border transition-all text-[8px] font-black ${isSizeSelected ? 'bg-toss-blue border-toss-blue text-white shadow-sm' : 'bg-white border-toss-grey-100 text-toss-grey-400'}`}
-                                  >
-                                    {sz.charAt(0)}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </motion.div>
+                    </div>
                   ))}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     <button onClick={() => onOpenMenuModal(order.id, '미정', null, 'DESSERT')} className="flex-1 h-8 bg-toss-blueLight text-toss-blue rounded-lg font-black text-[10px] flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm border border-toss-blue/10"><Plus size={12} strokeWidth={3} /> 추가</button>

@@ -33,12 +33,14 @@ interface MenuSelectionModalProps {
   title: string;
   drinkItems: string[];
   dessertItems: string[];
+  checkedDrinkItems: string[];
   initialSelections: OrderSubItem[];
   selectedItem: string;
   initialType?: ItemType;
   onSelect: (selections: SelectionItem[]) => void;
   onAdd: (item: string, type: ItemType) => void;
   onRemove: (item: string, type: ItemType) => void;
+  onUpdateChecked: (item: string, checked: boolean) => void;
   onDeleteSelection?: () => void;
   onUpdateMenuList?: (newList: string[], type: ItemType) => void;
   appSettings: AppSettings;
@@ -51,9 +53,12 @@ const SortableMenuItem: React.FC<{
   appSettings: AppSettings;
   orderedSizes: Set<DrinkSize | undefined>;
   isCurrentlySelected: boolean;
+  isChecked?: boolean;
+  showCheck?: boolean;
   handleItemClick: (name: string, type: ItemType, size?: DrinkSize) => void;
   onRemove: (item: string, type: ItemType) => void;
-}> = ({ id, item, activeTab, appSettings, orderedSizes, isCurrentlySelected, handleItemClick, onRemove }) => {
+  onToggleCheck?: () => void;
+}> = ({ id, item, activeTab, appSettings, orderedSizes, isCurrentlySelected, isChecked, showCheck, handleItemClick, onRemove, onToggleCheck }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Translate.toString(transform), transition, zIndex: isDragging ? 1000 : undefined, opacity: isDragging ? 0.6 : 1 };
   const showSize = activeTab === 'DRINK' && appSettings.showDrinkSize;
@@ -66,8 +71,18 @@ const SortableMenuItem: React.FC<{
       <div {...attributes} {...listeners} className="pl-1 pr-1 py-1.5 cursor-grab text-toss-grey-300 hover:text-toss-blue shrink-0">
         <GripVertical size={12} />
       </div>
-      <div className={`flex-1 flex items-center gap-1 rounded-xl border-2 transition-all h-10 min-w-0 ${isHighlighted ? 'bg-toss-blueLight border-toss-blue' : 'bg-toss-grey-50 border-transparent shadow-sm'}`}>
-        <button onClick={() => handleItemClick(item, activeTab, showSize ? 'Tall' : undefined)} className={`flex-1 h-full text-left px-2.5 flex items-center justify-between min-w-0 font-black ${isHighlighted ? 'text-toss-blue' : 'text-toss-grey-800'}`}>
+      <div className={`flex-1 flex items-center gap-1 rounded-xl border-2 transition-all h-10 min-w-0 ${isHighlighted ? 'bg-toss-blueLight border-toss-blue' : isChecked ? 'bg-toss-blueLight/30 border-toss-blue/30' : 'bg-toss-grey-50 border-transparent shadow-sm'}`}>
+        <div className="flex items-center gap-2 pl-2 shrink-0">
+          {showCheck && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onToggleCheck?.(); }}
+              className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${isChecked ? 'bg-toss-blue text-white' : 'bg-white border border-toss-grey-200 text-transparent'}`}
+            >
+              <Check size={12} strokeWidth={4} />
+            </button>
+          )}
+        </div>
+        <button onClick={() => handleItemClick(item, activeTab, showSize ? 'Tall' : undefined)} className={`flex-1 h-full text-left px-1 flex items-center justify-between min-w-0 font-black ${isHighlighted ? 'text-toss-blue' : isChecked ? 'text-toss-blue' : 'text-toss-grey-800'}`}>
           <span className="truncate text-[12px] tracking-tight">{item}</span>
           {isHighlighted && !showSize && <Check size={12} strokeWidth={4} className="shrink-0 ml-1" />}
         </button>
@@ -94,7 +109,7 @@ const SortableMenuItem: React.FC<{
 };
 
 export const MenuSelectionModal: React.FC<MenuSelectionModalProps> = ({
-  isOpen, onClose, drinkItems = [], dessertItems = [], initialSelections = [], selectedItem, initialType, onSelect, onAdd, onRemove, onDeleteSelection, onUpdateMenuList, appSettings
+  isOpen, onClose, title, drinkItems = [], dessertItems = [], checkedDrinkItems = [], initialSelections = [], selectedItem, initialType, onSelect, onAdd, onRemove, onUpdateChecked, onDeleteSelection, onUpdateMenuList, appSettings
 }) => {
   const [activeTab, setActiveTab] = useState<ItemType>('DRINK');
   const [searchQuery, setSearchQuery] = useState("");
@@ -232,7 +247,11 @@ export const MenuSelectionModal: React.FC<MenuSelectionModalProps> = ({
                     key={item} id={item} item={item} activeTab={activeTab} appSettings={appSettings}
                     orderedSizes={getItemOrderedSizes(item)}
                     isCurrentlySelected={selectedItem === item}
-                    handleItemClick={handleItemClick} onRemove={onRemove}
+                    isChecked={activeTab === 'DRINK' && checkedDrinkItems.includes(item)}
+                    showCheck={activeTab === 'DRINK'}
+                    handleItemClick={handleItemClick} 
+                    onRemove={onRemove}
+                    onToggleCheck={() => onUpdateChecked(item, !checkedDrinkItems.includes(item))}
                   />
                 ))}
               </SortableContext>

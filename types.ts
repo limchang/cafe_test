@@ -9,6 +9,7 @@ export interface AppSettings {
   quickMemos: string[];
   defaultEmojis: string[];
   randomCategory: EmojiCategory;
+  checkedDrinkItems: string[];
 }
 
 export interface OrderSubItem {

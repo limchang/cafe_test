@@ -14,7 +14,7 @@ import { HistoryModal } from './components/HistoryModal.tsx';
 
 const SETTINGS_STORAGE_KEY = 'cafesync_settings_v1';
 const HISTORY_STORAGE_KEY = 'cafesync_history_v1';
-export const DEFAULT_EMOJIS = ["👨🏻", "👩🏻", "👶🏻", "🧓🏻", "👵🏻", "👦🏻", "👧🏻", "🐶", "😺", "🐯", "🐷"];
+export const DEFAULT_EMOJIS = ["👨🏻", "👩🏻", "👶🏻", "👦🏻", "👧🏻", "🧓🏻", "👵🏻", "🐶", "😺", "🐯", "🐷", "◰", "◱", "◳", "◲"];
 
 const createEmptyOrder = (): OrderItem => ({
   id: uuidv4(),
@@ -47,7 +47,8 @@ function App() {
     showDrinkSize: false,
     quickMemos: ["샷추가", "덜쓰게", "물 따로", "얼음물"],
     defaultEmojis: [...DEFAULT_EMOJIS],
-    randomCategory: 'ANIMALS'
+    randomCategory: 'ANIMALS',
+    checkedDrinkItems: ["아메리카노", "카페라떼", "카라멜마끼아또"]
   });
   
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null);
@@ -129,6 +130,10 @@ function App() {
       if (savedSettings) {
         try {
           const parsed = JSON.parse(savedSettings);
+          // Ensure default emojis are updated to latest version
+          if (JSON.stringify(parsed.defaultEmojis) !== JSON.stringify(DEFAULT_EMOJIS)) {
+            parsed.defaultEmojis = [...DEFAULT_EMOJIS];
+          }
           setAppSettings(prev => ({ ...prev, ...parsed }));
         } catch (e) { console.error(e); }
       }
@@ -382,7 +387,15 @@ function App() {
         };
       })
     })));
-    showToast('모두 먹지 않겠대요 처리되었습니다.');
+    showToast(`${personIds.length}명을 안 먹음 처리했습니다.`);
+  };
+
+  const handleRemoveUndecided = (personIds: string[]) => {
+    setGroups(prev => prev.map(g => ({
+      ...g,
+      items: g.items.filter(p => !personIds.includes(p.id))
+    })));
+    showToast(`${personIds.length}명을 삭제했습니다.`);
   };
 
   const handleLoadPeopleOnly = (item: OrderHistoryItem) => {
@@ -411,6 +424,29 @@ function App() {
 
   const handleInputModeChange = (isActive: boolean) => {
     setActiveInputCount(prev => Math.max(0, isActive ? prev + 1 : prev - 1));
+  };
+
+  const handleRemoveMenuItem = (name: string, type: ItemType) => {
+    if (type === 'DRINK') {
+      setDrinkMenuItems(prev => prev.filter(i => i !== name));
+      setAppSettings(prev => ({
+        ...prev,
+        checkedDrinkItems: prev.checkedDrinkItems.filter(i => i !== name)
+      }));
+    } else {
+      setDessertMenuItems(prev => prev.filter(i => i !== name));
+    }
+  };
+
+  const handleUpdateCheckedItems = (name: string, checked: boolean) => {
+    setAppSettings(prev => {
+      const newList = checked 
+        ? [...new Set([...prev.checkedDrinkItems, name])]
+        : prev.checkedDrinkItems.filter(i => i !== name);
+      const updated = { ...prev, checkedDrinkItems: newList };
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
@@ -520,6 +556,7 @@ function App() {
                   appSettings={{...appSettings, isSharedSyncActive}} 
                   onRemoveGroup={() => openManageSheet(group.id)}
                   onInputModeChange={handleInputModeChange}
+                  onUpdateCheckedItems={handleUpdateCheckedItems}
                 />
               </div>
             ))}
@@ -599,16 +636,37 @@ function App() {
             }} 
             onUpdateGroupName={updateGroupName}
             onSetNotEating={handleSetNotEating}
+            onRemoveUndecided={handleRemoveUndecided}
+            onRemoveOrder={(id) => setGroups(prev => prev.map(g => ({ ...g, items: g.items.filter(item => item.id !== id) })))}
             appSettings={appSettings} expandState={summaryState} onSetExpandState={setSummaryState} 
           />
         )}
       </AnimatePresence>
       <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} history={history} onLoad={(item) => { setGroups(item.groups); setActiveGroupId(item.groups[0]?.id); }} onLoadPeopleOnly={handleLoadPeopleOnly} onDelete={(id) => setHistory(prev => prev.filter(h => h.id !== id))} onUpdate={(id, updates) => setHistory(prev => prev.map(h => h.id === id ? { ...h, ...updates } : h))} />
-      <MenuManagementModal isOpen={isMenuMgmtModalOpen} onClose={() => setIsMenuMgmtModalOpen(false)} drinkItems={drinkMenuItems} dessertItems={dessertMenuItems} onAdd={addMenuItemToState} onRemove={() => {}} onUpdateMenuList={(l, t) => t === 'DRINK' ? setDrinkMenuItems(l) : setDessertMenuItems(l)} />
+      <MenuManagementModal 
+        isOpen={isMenuMgmtModalOpen} 
+        onClose={() => setIsMenuMgmtModalOpen(false)} 
+        drinkItems={drinkMenuItems} 
+        dessertItems={dessertMenuItems} 
+        checkedDrinkItems={appSettings.checkedDrinkItems}
+        onAdd={addMenuItemToState} 
+        onRemove={handleRemoveMenuItem} 
+        onUpdateChecked={handleUpdateCheckedItems}
+        onUpdateMenuList={(l, t) => t === 'DRINK' ? setDrinkMenuItems(l) : setDessertMenuItems(l)} 
+      />
       <EmojiSettingsModal isOpen={isEmojiModalOpen} onClose={() => setIsEmojiModalOpen(false)} settings={appSettings} onUpdateSettings={handleUpdateSettings} />
       <QuickMemosModal isOpen={isMemoModalOpen} onClose={() => setIsMemoModalOpen(false)} settings={appSettings} onUpdateSettings={handleUpdateSettings} />
       <MenuSelectionModal 
-        isOpen={menuModalState.isOpen} onClose={() => setMenuModalState(prev => ({ ...prev, isOpen: false }))} title="메뉴 선택" drinkItems={drinkMenuItems} dessertItems={dessertMenuItems} initialSelections={menuModalState.initialSelections} selectedItem={menuModalState.selectedItem} initialType={menuModalState.initialType} onAdd={addMenuItemToState} 
+        isOpen={menuModalState.isOpen} 
+        onClose={() => setMenuModalState(prev => ({ ...prev, isOpen: false }))} 
+        title="메뉴 선택" 
+        drinkItems={drinkMenuItems} 
+        dessertItems={dessertMenuItems} 
+        checkedDrinkItems={appSettings.checkedDrinkItems}
+        initialSelections={menuModalState.initialSelections} 
+        selectedItem={menuModalState.selectedItem} 
+        initialType={menuModalState.initialType} 
+        onAdd={addMenuItemToState} 
         onSelect={(s) => { 
           const { orderId, subItemId } = menuModalState;
           if(!orderId) return;
@@ -665,7 +723,10 @@ function App() {
           }
           setMenuModalState(prev => ({ ...prev, isOpen: false }));
         }}
-        onRemove={() => {}} appSettings={appSettings} 
+        onRemove={handleRemoveMenuItem}
+        onUpdateChecked={handleUpdateCheckedItems}
+        onUpdateMenuList={(l, t) => t === 'DRINK' ? setDrinkMenuItems(l) : setDessertMenuItems(l)}
+        appSettings={appSettings} 
       />
       
       <AnimatePresence>
