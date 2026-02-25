@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { OrderHistoryItem } from '../types';
 import { X, Trash2, RotateCcw, Calendar, Coffee, AlertCircle, ChevronDown, ChevronUp, StickyNote, PenLine, Plus, Users } from 'lucide-react';
+import { EmojiRenderer } from './EmojiRenderer.tsx';
 
 interface HistoryModalProps {
   isOpen: boolean;
@@ -105,7 +106,9 @@ const HistoryItem: React.FC<{
                                   {(order.subItems || []).map((subItem) => (
                                     <div key={subItem.id} className="flex justify-between items-center text-[13px] px-2 py-1.5 hover:bg-white rounded-lg transition-colors">
                                         <div className="flex items-center gap-2 overflow-hidden">
-                                          <span className="text-toss-grey-500 truncate max-w-[80px]">{order.avatar || "-"}</span>
+                                          <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                                            <EmojiRenderer emoji={order.avatar || "-"} size={16} />
+                                          </div>
                                           <span className="text-toss-grey-800 font-bold truncate">{subItem.itemName}</span>
                                         </div>
                                         <span className={`shrink-0 font-bold ${subItem.type === 'DRINK' ? (subItem.temperature === 'ICE' ? 'text-toss-blue' : 'text-toss-red') : 'text-amber-600'}`}>

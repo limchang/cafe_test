@@ -3,6 +3,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderGroup, AggregatedOrder, AppSettings, ItemType } from '../types.ts';
 import { ChevronUp, ChevronDown, Coffee, Users, LayoutGrid, List, CheckCircle2, Save, UserMinus, Pencil, Check, Copy, Trash2, X } from 'lucide-react';
+import { EmojiRenderer } from './EmojiRenderer.tsx';
 
 interface OrderSummaryProps {
   groups: OrderGroup[];
@@ -40,9 +41,9 @@ const GroupedMemo: React.FC<GroupedMemoProps> = ({ memo, people, onJump }) => {
           <button
             key={`${p.personId}-${i}`}
             onClick={(e) => { e.stopPropagation(); onJump(p.groupId, p.personId); }}
-            className="relative inline-block h-4 w-4 rounded-full ring-1 ring-white bg-toss-grey-100 text-[8px] flex items-center justify-center shadow-sm hover:z-10 hover:scale-110 transition-all active:scale-95"
+            className="relative inline-block h-4 w-4 rounded-full ring-1 ring-white bg-toss-grey-100 text-[8px] flex items-center justify-center shadow-sm hover:z-10 hover:scale-110 transition-all active:scale-95 overflow-hidden"
           >
-            {p.avatar || "👤"}
+            <EmojiRenderer emoji={p.avatar || "👤"} size={12} />
           </button>
         ))}
       </div>
@@ -87,7 +88,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   // 공용 메뉴(😋)를 제외한 실제 사람(인원)만 필터링
   const personsWithGroup = useMemo(() => 
-    groups.flatMap(g => g.items.filter(p => p.avatar !== '😋').map(p => ({ ...p, groupId: g.id }))), 
+    groups.flatMap(g => g.items.filter(p => p.avatar !== '😋').map(p => ({ ...p, groupId: g.id, groupName: g.name }))), 
     [groups]
   );
 
@@ -272,29 +273,36 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-1.5">
                   {undecidedPersons.map((p) => (
-                    <div key={p.id} className="flex flex-col items-center gap-0.5 group relative">
-                      <button 
-                        onClick={() => { onJumpToOrder(p.groupId, p.id); onSetExpandState('collapsed'); }}
-                        className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-lg shadow-sm border border-yellow-300/30 active:scale-90 transition-transform"
-                      >
-                        {p.avatar || "👤"}
-                      </button>
-                      <span className="text-[8px] font-black text-yellow-600">이동</span>
+                    <div key={p.id} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-yellow-200 shadow-sm">
+                      <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-xl shrink-0">
+                        <EmojiRenderer emoji={p.avatar || "👤"} />
+                      </div>
                       
-                      <div className="absolute -top-1 -right-1 flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-black text-toss-grey-900 truncate">{p.groupName}</p>
+                        <p className="text-[9px] font-bold text-yellow-600">주문 대기 중</p>
+                      </div>
+
+                      <div className="flex items-center gap-1">
                         <button 
-                          onClick={(e) => { e.stopPropagation(); onSetNotEating?.([p.id]); }}
-                          className="w-4 h-4 bg-toss-grey-900 text-white rounded-full flex items-center justify-center shadow-md hover:bg-black"
+                          onClick={() => { onJumpToOrder(p.groupId, p.id); onSetExpandState('collapsed'); }}
+                          className="h-8 px-2.5 bg-toss-grey-100 text-toss-grey-700 rounded-lg text-[10px] font-black flex items-center gap-1 active:scale-95 transition-all"
                         >
-                          <X size={8} strokeWidth={4} />
+                          이동
                         </button>
                         <button 
-                          onClick={(e) => { e.stopPropagation(); onRemoveOrder?.(p.id); }}
-                          className="w-4 h-4 bg-toss-red text-white rounded-full flex items-center justify-center shadow-md hover:bg-toss-red/80"
+                          onClick={() => onSetNotEating?.([p.id])}
+                          className="h-8 px-2.5 bg-toss-grey-900 text-white rounded-lg text-[10px] font-black flex items-center gap-1 active:scale-95 transition-all"
                         >
-                          <Trash2 size={8} strokeWidth={4} />
+                          안먹음
+                        </button>
+                        <button 
+                          onClick={() => onRemoveOrder?.(p.id)}
+                          className="h-8 w-8 bg-toss-redLight text-toss-red rounded-lg flex items-center justify-center active:scale-95 transition-all"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -392,7 +400,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                           <div key={person.id} className="p-3">
                              <div className="flex items-center justify-between">
                                 <button onClick={() => { onJumpToOrder(group.id, person.id); onSetExpandState('collapsed'); }} className="flex items-center gap-2 active:scale-95 transition-transform min-w-0 text-left">
-                                  <span className="text-lg">{person.avatar || (person.avatar === '😋' ? '😋' : '👤')}</span>
+                                   <div className="text-lg w-6 h-6 flex items-center justify-center shrink-0">
+                                     <EmojiRenderer emoji={person.avatar || (person.avatar === '😋' ? '😋' : '👤')} size={20} />
+                                   </div>
                                   <div className="flex flex-col min-w-0">
                                     {person.subItems.filter(si => si.itemName !== '미정' && si.itemName !== '안 먹음').map(si => (
                                       <div key={si.id} className="flex items-center gap-1.5">

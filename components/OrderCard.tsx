@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderItem, ItemType, DrinkSize, AppSettings, OrderSubItem, EmojiCategory } from '../types';
 import { Snowflake, Flame, Trash2, Plus, Dices, MoreHorizontal, AlertCircle, ArrowLeft, ChevronDown, ChevronUp, User, MessageCircle, Check, Pencil, Send, Minus, UtensilsCrossed, UserMinus, RefreshCw, CakeSlice, Info, Clock, RotateCcw, Heart, X } from 'lucide-react';
+import { EmojiRenderer } from './EmojiRenderer.tsx';
 
 interface ExtendedSubItem extends OrderSubItem {
   isSynced?: boolean;
@@ -300,7 +301,9 @@ export const OrderCard: React.FC<OrderCardProps> = ({
             <div className="grid grid-cols-4 gap-1.5 flex-1 items-center justify-items-center overflow-y-auto no-scrollbar pt-1 pb-2">
               <button onClick={() => handleAvatarSelect(CATEGORY_EMOJIS[appSettings.randomCategory][Math.floor(Math.random() * 16)])} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/50 text-toss-blue transition-transform active:scale-90 border border-toss-blue/10"><Dices size={20} /></button>
               {appSettings.defaultEmojis.map(emoji => (
-                <button key={emoji} onClick={() => handleAvatarSelect(emoji)} className="w-9 h-9 flex items-center justify-center rounded-xl text-3xl transition-transform active:scale-90 leading-none">{emoji}</button>
+                <button key={emoji} onClick={() => handleAvatarSelect(emoji)} className="w-9 h-9 flex items-center justify-center rounded-xl transition-transform active:scale-90 leading-none">
+                  <EmojiRenderer emoji={emoji} size={28} />
+                </button>
               ))}
             </div>
             <button onClick={() => onRemove(order.id)} className="w-full h-9 mt-1 rounded-xl text-[10px] font-black text-white bg-toss-grey-400 hover:bg-toss-red transition-all shadow-sm shrink-0">인원 삭제</button>
@@ -338,7 +341,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
               <div className="relative inline-block mb-1 z-10 pt-2">
                 <button onClick={handleAvatarClick} className="text-5xl active:scale-95 transition-transform drop-shadow-sm select-none animate-float relative z-10">
-                  {order.avatar}
+                  <EmojiRenderer emoji={order.avatar} size={48} />
                   {/* 말풍선 아이콘: 메모가 있을 때 표시 */}
                   {allMemos.length > 0 && (
                     <motion.div 
